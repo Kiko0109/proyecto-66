@@ -1,0 +1,28 @@
+{
+  "network_name": "Proyecto 66 - Colmena de Nubes",
+  "commander_status": "STANDBY",
+  "version": "2.4.0",
+  "last_backup": "2026-10-26T14:35:00Z",
+  "nodes": [
+    {
+      "id": "github-runner",
+      "provider": "GitHub Actions",
+      "owner": "Kiko0109",
+      "status": "active",
+      "free_monthly_quota": "2000 min"
+    },
+    {
+      "id": "render-primary",
+      "provider": "Render Web Service",
+      "owner": "Kiko0109",
+      "status": "online",
+      "free_monthly_quota": "750 hours"
+    }
+  ],
+  "learning_knowledge": [
+    "Cuba VPN buffer: Mantener margen de 10 min en senales de entrada",
+    "Max horizon: Operaciones intradia no mayores a 4 horas",
+    "Risk rule: 2% maximo por operacion, lotes 0.001 a 1.00",
+    "Multi-cloud: Respaldar estado en GitHub antes de que Render se duerma"
+  ]
+}
