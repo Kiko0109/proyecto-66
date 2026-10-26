@@ -1,0 +1,40 @@
+name: Proyecto 66 - Cloud Trading Autonomous 24/7
+
+on:
+  schedule:
+    # Corre automáticamente cada 1 hora en los servidores de GitHub (gratis)
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    # Permite ejecutarlo manualmente con 1 clic desde GitHub o la app
+
+permissions:
+  contents: write
+
+jobs:
+  run-autonomous-trading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout del repositorio Proyecto 66
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Ejecutar Motor Táctico Autónomo de Trading
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MARKET_API_KEY: ${{ secrets.MARKET_API_KEY }}
+        run: |
+          python cloud_trading_bot.py
+
+      - name: Persistir estado y auditoría en el repositorio
+        run: |
+          git config --global user.name "Proyecto66-CloudBot"
+          git config --global user.email "bot@proyecto66.local"
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "Auto-Update: Ciclo de trading cloud completado [skip ci]"
+          git push || true
