@@ -79,3 +79,6 @@ def responder_comando(comando):
 if __name__ == "__main__":
     print("⚡ Proyecto 66 - Núcleo Yan iniciado.")
     print(obtener_equipo_completo())
+
+# Alias de compatibilidad
+responder = responder_comando
