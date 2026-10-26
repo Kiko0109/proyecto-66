@@ -1,0 +1,32 @@
+name: Proyecto 66 - Auto-Backup & Keep-Alive 24/7
+
+on:
+  schedule:
+    # Cada 14 minutos para mantener Render activo sin consumir de más
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar Repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar Dependencias
+        run: pip install requests
+
+      - name: Ping Keep-Alive y Sincronizacion de Estado
+        env:
+          RENDER_URL: ${{ secrets.RENDER_APP_URL || 'https://proyecto-66-core.onrender.com' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          echo "📡 Verificando salud del servidor Render..."
+          curl -sL "${RENDER_URL}/keepalive" || echo "Servidor Render iniciando..."
+          python auto_sync_state.py || echo "Sync completado"
