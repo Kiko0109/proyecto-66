@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: proyecto-66
+    runtime: python
+    repo: https://github.com/Kiko0109/proyecto-66
+    branch: main
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app --workers 1 --threads 8 --timeout 120
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: COMMANDER_STATUS
+        value: STANDBY
+      - key: TELEGRAM_CHAT_ID
+        value: "8885707506"
+      - key: GITHUB_REPO
+        value: Kiko0109/proyecto-66
+      - key: FLASK_ENV
+        value: production

@@ -313,6 +313,35 @@ def render_game(game_id):
 </body>
 </html>"""
 
+
+# ====================================================================
+# MOTOR DE APUESTAS DEPORTIVAS (PRIMERO APRENDE, LUEGO APUESTA)
+# ====================================================================
+try:
+    from sports_engine import sports_engine
+except ImportError:
+    sports_engine = None
+
+@app.route("/sports-audit", methods=["POST"])
+def sports_audit():
+    data = request.get_json() or {}
+    sport = data.get("sport", "Fútbol")
+    match = data.get("match", "Partido")
+    source_apk = data.get("source_apk", "APK Externa")
+    original_pred = data.get("prediction", "Local")
+    odd = data.get("odd", 1.85)
+
+    if sports_engine:
+        res = sports_engine.audit_external_prediction(sport, match, source_apk, original_pred, odd)
+        return jsonify({"success": True, "audit": res})
+    return jsonify({"success": False, "error": "Motor deportivo no disponible"}), 500
+
+@app.route("/sports-memory-txt", methods=["GET"])
+def sports_memory_txt():
+    if sports_engine:
+        return jsonify({"success": True, "txt_memory": sports_engine.export_memory_to_txt()})
+    return jsonify({"success": False, "error": "Motor deportivo no disponible"}), 500
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
