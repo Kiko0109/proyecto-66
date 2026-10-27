@@ -230,22 +230,15 @@ def pack_to_txt():
     base64_content = data.get("content_base64", "")
     file_type = data.get("file_type", "media")
     
-    txt_container = (
-        f"=== PROYECTO 66 CLOUD CONTAINER (.TXT) ===
-"
-        f"ORIGINAL_FILENAME: {filename}
-"
-        f"FILE_TYPE: {file_type}
-"
-        f"ENCODING: BASE64
-"
-        f"TIMESTAMP: {time.time()}
-"
-        f"PAYLOAD:
-{base64_content}
-"
-        f"=== END CONTAINER ==="
-    )
+    txt_container = "\n".join([
+        "=== PROYECTO 66 CLOUD CONTAINER (.TXT) ===",
+        f"ORIGINAL_FILENAME: {filename}",
+        f"FILE_TYPE: {file_type}",
+        "ENCODING: BASE64",
+        f"TIMESTAMP: {time.time()}",
+        f"PAYLOAD: {base64_content}",
+        "=== END CONTAINER ==="
+    ])
     return jsonify({
         "success": True,
         "txt_filename": f"{filename}.txt",
@@ -341,6 +334,31 @@ def sports_memory_txt():
     if sports_engine:
         return jsonify({"success": True, "txt_memory": sports_engine.export_memory_to_txt()})
     return jsonify({"success": False, "error": "Motor deportivo no disponible"}), 500
+
+
+# ====================================================================
+# MOTOR DE LIGAS Y TORNEOS DE JUEGOS PESADOS (KUKO)
+# Call of Duty, Free Fire MAX, Delta Force: Hawk Ops
+# ====================================================================
+try:
+    from kuko_league import kuko_league
+except ImportError:
+    kuko_league = None
+
+@app.route('/league/overview', methods=['GET'])
+def league_overview():
+    if kuko_league:
+        return jsonify({'success': True, 'leagues': kuko_league.get_all_leagues()})
+    return jsonify({'success': False, 'error': 'Motor de liga no disponible'}), 500
+
+@app.route('/league/<game_id>', methods=['GET'])
+def get_league_details(game_id):
+    if kuko_league:
+        l = kuko_league.get_league(game_id)
+        if l:
+            return jsonify({'success': True, 'league': l})
+        return jsonify({'error': 'Liga no encontrada'}), 404
+    return jsonify({'success': False, 'error': 'Motor de liga no disponible'}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
