@@ -360,6 +360,15 @@ def get_league_details(game_id):
         return jsonify({'error': 'Liga no encontrada'}), 404
     return jsonify({'success': False, 'error': 'Motor de liga no disponible'}), 500
 
+
+# Registrar módulo MMORPG Soberano & Cripto Casino BEP-20
+try:
+    from kuko_mmorpg_casino import mmorpg_casino_bp
+    app.register_blueprint(mmorpg_casino_bp)
+    logger.info("Blueprint MMORPG & Cripto Casino registrado exitosamente.")
+except Exception as e:
+    logger.warning(f"No se pudo cargar mmorpg_casino_bp: {e}")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
