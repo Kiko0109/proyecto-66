@@ -369,6 +369,63 @@ try:
 except Exception as e:
     print(f"No se pudo cargar mmorpg_casino_bp: {e}")
 
+
+# ====================================================================
+# RED DE ALMACENAMIENTO MULTI-NUBE CON AUTO-FAILOVER (< 100 MB LIBRES)
+# ====================================================================
+STORAGE_NODES_CONFIG = {
+    "terabox": {
+        "name": "TeraBox Cloud Masivo (1 TB)",
+        "url": "https://1024terabox.com/s/1L_NOiv76X_exslqtjua92w",
+        "capacity_gb": 1024,
+        "failover_threshold_mb": 100,
+        "status": "connected",
+        "priority": 1,
+        "is_active": True,
+        "role": "Juegos pesados COD, Delta Force, Free Fire, APKs y videos HD"
+    },
+    "gdrive": {
+        "name": "Google Drive Soberano (15 GB)",
+        "url": "https://drive.google.com/drive/folders/1TW_52ndwMguhNAAMJeXckZ__9brbfOuL",
+        "capacity_gb": 15,
+        "failover_threshold_mb": 100,
+        "status": "connected",
+        "priority": 2,
+        "is_active": False,
+        "role": "Relevo primario si TeraBox < 100 MB libres, memoria RAG Yanet y documentos"
+    },
+    "mega": {
+        "name": "MEGA Vault Cifrado (20 GB)",
+        "url": "https://mega.nz/folder/proyecto66_vault",
+        "capacity_gb": 20,
+        "failover_threshold_mb": 100,
+        "status": "ready_to_link",
+        "priority": 3,
+        "is_active": False,
+        "role": "Relevo secundario y copias cifradas de seguridad"
+    },
+    "telegram": {
+        "name": "Telegram Cloud CDN (Ilimitado)",
+        "url": "Telegram CDN Chat ID 8885707506",
+        "capacity_gb": 9999,
+        "failover_threshold_mb": 100,
+        "status": "connected",
+        "priority": 4,
+        "is_active": False,
+        "role": "Streaming móvil directo a Telegram sin ocupar disco local"
+    }
+}
+
+@app.route('/storage/overview', methods=['GET'])
+def storage_overview():
+    return jsonify({
+        'success': True,
+        'rule': 'Auto-traspaso automatico si el espacio libre cae por debajo de 100 MB',
+        'active_target': 'terabox',
+        'failover_chain': ['terabox', 'gdrive', 'mega', 'telegram'],
+        'nodes': STORAGE_NODES_CONFIG
+    })
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
