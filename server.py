@@ -365,9 +365,9 @@ def get_league_details(game_id):
 try:
     from kuko_mmorpg_casino import mmorpg_casino_bp
     app.register_blueprint(mmorpg_casino_bp)
-    logger.info("Blueprint MMORPG & Cripto Casino registrado exitosamente.")
+    print("Blueprint MMORPG & Cripto Casino registrado exitosamente.")
 except Exception as e:
-    logger.warning(f"No se pudo cargar mmorpg_casino_bp: {e}")
+    print(f"No se pudo cargar mmorpg_casino_bp: {e}")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
