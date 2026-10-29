@@ -396,10 +396,10 @@ STORAGE_NODES_CONFIG = {
     },
     "mega": {
         "name": "MEGA Vault Cifrado (20 GB)",
-        "url": "https://mega.nz/folder/proyecto66_vault",
+        "url": "https://mega.nz/folder/AJQ11TBY#lmhjsJ1wvBvPsQEEf8LbjA",
         "capacity_gb": 20,
         "failover_threshold_mb": 100,
-        "status": "ready_to_link",
+        "status": "connected",
         "priority": 3,
         "is_active": False,
         "role": "Relevo secundario y copias cifradas de seguridad"
