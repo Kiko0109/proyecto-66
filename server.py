@@ -106,6 +106,32 @@ def save_state_to_github():
     return False
 
 # ====================================================================
+# ESCUDO DE SEGURIDAD Y ANTI-IA CRAWLERS (MÁXIMA PRIVACIDAD)
+# ====================================================================
+
+BLOCKED_AI_SCRAPERS = [
+    "gptbot", "chatgpt", "ccbot", "anthropic", "claude",
+    "bytespider", "perplexity", "google-extended", "cohere", "diffbot", "facebookbot"
+]
+
+@app.before_request
+def anti_ai_shield():
+    """Bloquea cualquier intento de indexacion, entrenamiento o scraping de IAs externas"""
+    ua = request.headers.get("User-Agent", "").lower()
+    for bot in BLOCKED_AI_SCRAPERS:
+        if bot in ua:
+            return jsonify({"status": "blocked", "error": "Acceso restringido. Perimetro privado Proyecto 66."}), 403
+
+@app.after_request
+def apply_strict_privacy_headers(response):
+    """Prohibicion total de indexado, cacheado o entrenamiento en motores"""
+    response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet, noai, noimageai"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+    return response
+
+# ====================================================================
 # RUTAS DEL SERVIDOR WEB RENDER
 # ====================================================================
 
