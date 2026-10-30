@@ -23,7 +23,7 @@ jobs:
 
       - name: Ping Keep-Alive y Sincronizacion de Estado
         env:
-          RENDER_URL: ${{ secrets.RENDER_APP_URL || 'https://proyecto-66.onrender.com' }}
+          RENDER_URL: ${{ secrets.RENDER_APP_URL || 'https://proyecto-66-core.onrender.com' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO: ${{ github.repository }}
         run: |
