@@ -402,7 +402,37 @@ STORAGE_NODES_CONFIG = {
         "status": "connected",
         "priority": 3,
         "is_active": False,
-        "role": "Relevo secundario y copias cifradas de seguridad"
+        "role": "Relevo secundario y copias cifradas con llave privada"
+    },
+    "proton": {
+        "name": "Proton Drive Cifrado (5 GB)",
+        "url": "https://drive.proton.me/urls/4J2CBBRXGR#kvf37BAlnDsP",
+        "capacity_gb": 5,
+        "failover_threshold_mb": 100,
+        "status": "connected",
+        "priority": 4,
+        "is_active": False,
+        "role": "Bóveda suiza privada con cifrado cero conocimiento para credenciales"
+    },
+    "koofr": {
+        "name": "Koofr Cloud Permanente (10 GB)",
+        "url": "https://k00.fr/ekvbara8",
+        "capacity_gb": 10,
+        "failover_threshold_mb": 100,
+        "status": "connected",
+        "priority": 5,
+        "is_active": False,
+        "role": "10 GB permanentes para datos de bots y backups"
+    },
+    "pcloud": {
+        "name": "pCloud Media Vault (10 GB)",
+        "url": "https://u.pcloud.link/publink/show?code=kZnjchJZcCNU03Lw7L0yYnoL5S9Po8dL9OzX",
+        "capacity_gb": 10,
+        "failover_threshold_mb": 100,
+        "status": "connected",
+        "priority": 6,
+        "is_active": False,
+        "role": "Servidores multimedia de alta velocidad para streaming sin descarga local"
     },
     "telegram": {
         "name": "Telegram Cloud CDN (Ilimitado)",
@@ -410,7 +440,7 @@ STORAGE_NODES_CONFIG = {
         "capacity_gb": 9999,
         "failover_threshold_mb": 100,
         "status": "connected",
-        "priority": 4,
+        "priority": 7,
         "is_active": False,
         "role": "Streaming móvil directo a Telegram sin ocupar disco local"
     }
@@ -422,7 +452,7 @@ def storage_overview():
         'success': True,
         'rule': 'Auto-traspaso automatico si el espacio libre cae por debajo de 100 MB',
         'active_target': 'terabox',
-        'failover_chain': ['terabox', 'gdrive', 'mega', 'telegram'],
+        'failover_chain': ['terabox', 'gdrive', 'mega', 'proton', 'koofr', 'pcloud', 'telegram'],
         'nodes': STORAGE_NODES_CONFIG
     })
 
