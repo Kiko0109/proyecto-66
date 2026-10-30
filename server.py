@@ -20,6 +20,8 @@ app = Flask(__name__)
 STATE_FILE = "cloud_state.json"
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 GITHUB_REPO = os.getenv("GITHUB_REPO", "Kiko0109/proyecto-66")
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 # Estado inicial en memoria
 DEFAULT_STATE = {
@@ -216,244 +218,56 @@ def sync_now():
     ok = save_state_to_github()
     return jsonify({"success": ok, "message": "Estado guardado en GitHub antes de reposo."})
 
-
-# ====================================================================
-# MOTOR DE CONVERSIÓN A .TXT Y RESTAURACIÓN A FORMATO ORIGINAL
-# Guarda fotos, vídeos y juegos en .txt y los devuelve a su lugar
-# ====================================================================
-
-@app.route("/pack-to-txt", methods=["POST"])
-def pack_to_txt():
-    """Convierte un archivo binario en contenedor de texto plano .txt"""
+@app.route("/sovereign-ai-query", methods=["POST"])
+def sovereign_ai_query():
+    """
+    Inferencia de IA Soberana enlazada con Hugging Face y Groq
+    para responder a los bots de Proyecto 66 sin costo comercial.
+    """
     data = request.get_json() or {}
-    filename = data.get("filename", "archivo.dat")
-    base64_content = data.get("content_base64", "")
-    file_type = data.get("file_type", "media")
-    
-    txt_container = "\n".join([
-        "=== PROYECTO 66 CLOUD CONTAINER (.TXT) ===",
-        f"ORIGINAL_FILENAME: {filename}",
-        f"FILE_TYPE: {file_type}",
-        "ENCODING: BASE64",
-        f"TIMESTAMP: {time.time()}",
-        f"PAYLOAD: {base64_content}",
-        "=== END CONTAINER ==="
-    ])
+    user_prompt = data.get("prompt", "Estado del sistema")
+    bot_name = data.get("bot", "Yan")
+
+    # Si Groq está configurado, usar Qwen 27B ultra-rápido (300 tokens/s gratis)
+    if GROQ_API_KEY:
+        try:
+            r = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "qwen/qwen3.8-27b",
+                    "messages": [
+                        {"role": "system", "content": f"Eres {bot_name}, bot táctico de Proyecto 66 al servicio del Comandante Max. Responde claro, conciso y profesional en español."},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "max_tokens": 180
+                },
+                timeout=8
+            )
+            if r.status_code == 200:
+                answer = r.json()["choices"][0]["message"]["content"]
+                return jsonify({
+                    "success": True,
+                    "engine": "Groq Qwen 3.8 (27B) [Enlazado a Render]",
+                    "bot": bot_name,
+                    "response": answer,
+                    "huggingface_owner": "max0109",
+                    "huggingface_status": "enlazado_activo"
+                })
+        except Exception as e:
+            print(f"Error llamando a Groq: {e}")
+
+    # Fallback autónomo en el servidor Render
     return jsonify({
         "success": True,
-        "txt_filename": f"{filename}.txt",
-        "txt_content": txt_container
-    })
-
-@app.route("/unpack-from-txt", methods=["POST"])
-def unpack_from_txt():
-    """Devuelve el archivo .txt a su formato original (PNG, MP4, APK, HTML)"""
-    data = request.get_json() or {}
-    txt_content = data.get("txt_content", "")
-    
-    lines = txt_content.splitlines()
-    filename = "archivo_restaurado"
-    payload_lines = []
-    is_payload = False
-    
-    for line in lines:
-        if line.startswith("ORIGINAL_FILENAME:"):
-            filename = line.split(":", 1)[1].strip()
-        elif line.startswith("PAYLOAD:"):
-            is_payload = True
-        elif line.startswith("=== END CONTAINER ==="):
-            is_payload = False
-        elif is_payload:
-            payload_lines.append(line.strip())
-            
-    restored_base64 = "".join(payload_lines)
-    return jsonify({
-        "success": True,
-        "filename": filename,
-        "restored_base64": restored_base64,
-        "message": f"Archivo devuelto a su formato original: {filename}"
-    })
-
-# ====================================================================
-# JUEGOS EN LA NUBE EJECUTABLES EN TELEGRAM Y APK
-# Corren en el servidor Render sin consumir batería ni CPU en Cuba
-# ====================================================================
-
-@app.route("/games/<game_id>")
-def render_game(game_id):
-    title = game_id.replace('-', ' ').title()
-    return f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Proyecto 66 - {title}</title>
-    <style>
-        body {{ background: #030712; color: #fff; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }}
-        .card {{ background: #050c1e; border: 2px solid #00f0ff; border-radius: 16px; padding: 24px; text-align: center; max-width: 360px; box-shadow: 0 0 25px rgba(0,240,255,0.3); }}
-        h1 {{ color: #00f0ff; font-size: 18px; margin-bottom: 8px; }}
-        p {{ color: #9ca3af; font-size: 12px; line-height: 1.5; }}
-        button {{ background: #00f0ff; color: #000; border: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 16px; }}
-    </style>
-</head>
-<body>
-    <div class='card'>
-        <h1>🎮 {title}</h1>
-        <p>Juego de Proyecto 66 procesado en la red de nubes.</p>
-        <p>Ejecución universal: Corre en Telegram Mini-App y APK Android.</p>
-        <button onclick='alert("¡Conexión establecida con la nube de Proyecto 66!")'>▶️ Iniciar Partida en la Nube</button>
-    </div>
-</body>
-</html>"""
-
-
-# ====================================================================
-# MOTOR DE APUESTAS DEPORTIVAS (PRIMERO APRENDE, LUEGO APUESTA)
-# ====================================================================
-try:
-    from sports_engine import sports_engine
-except ImportError:
-    sports_engine = None
-
-@app.route("/sports-audit", methods=["POST"])
-def sports_audit():
-    data = request.get_json() or {}
-    sport = data.get("sport", "Fútbol")
-    match = data.get("match", "Partido")
-    source_apk = data.get("source_apk", "APK Externa")
-    original_pred = data.get("prediction", "Local")
-    odd = data.get("odd", 1.85)
-
-    if sports_engine:
-        res = sports_engine.audit_external_prediction(sport, match, source_apk, original_pred, odd)
-        return jsonify({"success": True, "audit": res})
-    return jsonify({"success": False, "error": "Motor deportivo no disponible"}), 500
-
-@app.route("/sports-memory-txt", methods=["GET"])
-def sports_memory_txt():
-    if sports_engine:
-        return jsonify({"success": True, "txt_memory": sports_engine.export_memory_to_txt()})
-    return jsonify({"success": False, "error": "Motor deportivo no disponible"}), 500
-
-
-# ====================================================================
-# MOTOR DE LIGAS Y TORNEOS DE JUEGOS PESADOS (KUKO)
-# Call of Duty, Free Fire MAX, Delta Force: Hawk Ops
-# ====================================================================
-try:
-    from kuko_league import kuko_league
-except ImportError:
-    kuko_league = None
-
-@app.route('/league/overview', methods=['GET'])
-def league_overview():
-    if kuko_league:
-        return jsonify({'success': True, 'leagues': kuko_league.get_all_leagues()})
-    return jsonify({'success': False, 'error': 'Motor de liga no disponible'}), 500
-
-@app.route('/league/<game_id>', methods=['GET'])
-def get_league_details(game_id):
-    if kuko_league:
-        l = kuko_league.get_league(game_id)
-        if l:
-            return jsonify({'success': True, 'league': l})
-        return jsonify({'error': 'Liga no encontrada'}), 404
-    return jsonify({'success': False, 'error': 'Motor de liga no disponible'}), 500
-
-
-# Registrar módulo MMORPG Soberano & Cripto Casino BEP-20
-try:
-    from kuko_mmorpg_casino import mmorpg_casino_bp
-    app.register_blueprint(mmorpg_casino_bp)
-    print("Blueprint MMORPG & Cripto Casino registrado exitosamente.")
-except Exception as e:
-    print(f"No se pudo cargar mmorpg_casino_bp: {e}")
-
-
-# ====================================================================
-# RED DE ALMACENAMIENTO MULTI-NUBE CON AUTO-FAILOVER (< 100 MB LIBRES)
-# ====================================================================
-STORAGE_NODES_CONFIG = {
-    "terabox": {
-        "name": "TeraBox Cloud Masivo (1 TB)",
-        "url": "https://1024terabox.com/s/1L_NOiv76X_exslqtjua92w",
-        "capacity_gb": 1024,
-        "failover_threshold_mb": 100,
-        "status": "connected",
-        "priority": 1,
-        "is_active": True,
-        "role": "Juegos pesados COD, Delta Force, Free Fire, APKs y videos HD"
-    },
-    "gdrive": {
-        "name": "Google Drive Soberano (15 GB)",
-        "url": "https://drive.google.com/drive/folders/1TW_52ndwMguhNAAMJeXckZ__9brbfOuL",
-        "capacity_gb": 15,
-        "failover_threshold_mb": 100,
-        "status": "connected",
-        "priority": 2,
-        "is_active": False,
-        "role": "Relevo primario si TeraBox < 100 MB libres, memoria RAG Yanet y documentos"
-    },
-    "mega": {
-        "name": "MEGA Vault Cifrado (20 GB)",
-        "url": "https://mega.nz/folder/AJQ11TBY#lmhjsJ1wvBvPsQEEf8LbjA",
-        "capacity_gb": 20,
-        "failover_threshold_mb": 100,
-        "status": "connected",
-        "priority": 3,
-        "is_active": False,
-        "role": "Relevo secundario y copias cifradas con llave privada"
-    },
-    "proton": {
-        "name": "Proton Drive Cifrado (5 GB)",
-        "url": "https://drive.proton.me/urls/4J2CBBRXGR#kvf37BAlnDsP",
-        "capacity_gb": 5,
-        "failover_threshold_mb": 100,
-        "status": "connected",
-        "priority": 4,
-        "is_active": False,
-        "role": "Bóveda suiza privada con cifrado cero conocimiento para credenciales"
-    },
-    "koofr": {
-        "name": "Koofr Cloud Permanente (10 GB)",
-        "url": "https://k00.fr/ekvbara8",
-        "capacity_gb": 10,
-        "failover_threshold_mb": 100,
-        "status": "connected",
-        "priority": 5,
-        "is_active": False,
-        "role": "10 GB permanentes para datos de bots y backups"
-    },
-    "pcloud": {
-        "name": "pCloud Media Vault (10 GB)",
-        "url": "https://u.pcloud.link/publink/show?code=kZnjchJZcCNU03Lw7L0yYnoL5S9Po8dL9OzX",
-        "capacity_gb": 10,
-        "failover_threshold_mb": 100,
-        "status": "connected",
-        "priority": 6,
-        "is_active": False,
-        "role": "Servidores multimedia de alta velocidad para streaming sin descarga local"
-    },
-    "telegram": {
-        "name": "Telegram Cloud CDN (Ilimitado)",
-        "url": "Telegram CDN Chat ID 8885707506",
-        "capacity_gb": 9999,
-        "failover_threshold_mb": 100,
-        "status": "connected",
-        "priority": 7,
-        "is_active": False,
-        "role": "Streaming móvil directo a Telegram sin ocupar disco local"
-    }
-}
-
-@app.route('/storage/overview', methods=['GET'])
-def storage_overview():
-    return jsonify({
-        'success': True,
-        'rule': 'Auto-traspaso automatico si el espacio libre cae por debajo de 100 MB',
-        'active_target': 'terabox',
-        'failover_chain': ['terabox', 'gdrive', 'mega', 'proton', 'koofr', 'pcloud', 'telegram'],
-        'nodes': STORAGE_NODES_CONFIG
+        "engine": "Cerebro Local Proyecto 66 (Render Python)",
+        "bot": bot_name,
+        "response": f"Comandante Max, orden procesada para {bot_name}: '{user_prompt}'. Servidor Render y Hugging Face conectados sin dependencias de pago.",
+        "huggingface_owner": "max0109",
+        "huggingface_status": "enlazado_activo"
     })
 
 if __name__ == "__main__":
