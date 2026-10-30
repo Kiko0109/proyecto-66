@@ -1,0 +1,75 @@
+name: Compilacion Automatica de las 3 APKs - Proyecto 66
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-apks:
+    runs-on: ubuntu-latest
+    name: Compilar APKs Android (Control, Estudio, Juegos)
+
+    steps:
+      - name: 1. Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 3. Configurar Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 4. Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 5. Instalar dependencias del proyecto
+        run: |
+          npm ci || npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: 6. Compilar Bundle Web
+        run: npm run build
+
+      - name: 7. Inicializar y Sincronizar Contenedor Android
+        run: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: 8. Compilar APK de Depuracion (Debug)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: 9. Renombrar y Empaquetar APKs
+        run: |
+          mkdir -p artifacts
+          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/Proyecto66_Control_v1.0.apk || true
+          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/Proyecto66_Estudio_v1.0.apk || true
+          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/Proyecto66_Juegos_v1.0.apk || true
+
+      - name: 10. Subir Artefactos APK para Descarga Directa
+        uses: actions/upload-artifact@v4
+        with:
+          name: Proyecto66-APKs-Android
+          path: artifacts/*.apk
+          retention-days: 14
+
+      - name: 11. Enviar APK directamente a Telegram de Max (@Yan0109bot)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '8885707506' }}
+        run: |
+          if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -f "artifacts/Proyecto66_Control_v1.0.apk" ]; then
+            echo "🚀 Enviando APK a Telegram de Max..."
+            curl -s -F chat_id="$TELEGRAM_CHAT_ID"                  -F caption="📦 <b>PROYECTO 66 | APK ANDROID LISTA</b>%0A%0AComandante Max, aquí tiene su archivo APK compilado desde la nube. Toque directamente sobre el archivo adjunto para descargarlo e instalarlo en su móvil Android en 1 toque."                  -F parse_mode="HTML"                  -F document=@artifacts/Proyecto66_Control_v1.0.apk                  https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument || echo "Aviso: Fallo envio de APK a Telegram"
+          else
+            echo "TELEGRAM_BOT_TOKEN no configurado en Secrets o APK no encontrada."
+          fi
