@@ -55,5 +55,50 @@
       "Vespera (Archimaga)"
     ],
     "dialogue_ai": "bidirectional_qa_proactive"
+  },
+  "ai_sovereign_location": "Red de Nubes Soberana Distribuida (TeraBox + Hugging Face + Render + Drive)",
+  "cloud_storage_metrics": {
+    "total_gb": 1114.5,
+    "used_gb": 5.85,
+    "available_gb": 1108.65,
+    "free_percentage": "99.48%",
+    "used_percentage": "0.52%",
+    "breakdown": {
+      "ai_models_and_memory": "2.10 GB",
+      "mmorpg_and_casino_games": "3.20 GB",
+      "database_and_supabase": "0.45 GB",
+      "docs_and_logs": "0.10 GB"
+    },
+    "nodes": {
+      "terabox": {
+        "total": "1,024 GB",
+        "used": "4.5 GB",
+        "available": "1,019.5 GB"
+      },
+      "huggingface": {
+        "total": "50 GB",
+        "used": "1.8 GB",
+        "available": "48.2 GB"
+      },
+      "mega": {
+        "total": "20 GB",
+        "used": "0.2 GB",
+        "available": "19.8 GB"
+      },
+      "gdrive": {
+        "total": "15 GB",
+        "used": "0.8 GB",
+        "available": "14.2 GB"
+      },
+      "supabase": {
+        "total": "500 MB",
+        "used": "25 MB",
+        "available": "475 MB"
+      },
+      "telegram": {
+        "total": "Ilimitado",
+        "used": "2.1 GB"
+      }
+    }
   }
 }
