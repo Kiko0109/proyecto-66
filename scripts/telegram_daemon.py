@@ -252,10 +252,10 @@ def jugar_silo_cubano(username, action="roll"):
         SILO_STATE["current_banker"] = username
         return (
             f"👑 *¡{username.upper()} ASUME EL BANCO DEL SILO CUBANO!*\n\n"
-            f"Tienes el banco en tus manos. La mesa colocó {SILO_STATE['table_pot']} P66 en apuestas contra ti.\n"
-            f"• Si tiras **Silo (4-5-6)** o el 6: ¡Recoges toda la mesa (menos el 10% de la casa)!\n"
-            f"• Si tiras **El Majá (1-2-3)** o el 1: ¡Pierdes y pagas la mesa!\n"
-            f"• Si tiras **Cierre (Par + Dado)**: Marcas punto para defender.\n\n"
+            f"Tiras contra toda la mesa. La mesa colocó {SILO_STATE['table_pot']} P66 en apuestas contra ti.\n"
+            f"• **Silo o el 6 (4-5-6 o el 6):** ¡Recoges toda la mesa (menos el 10% de comisión de la casa)!\n"
+            f"• **El Majá o el 1 (1-2-3 o el 1):** ¡Pierdes y pagas la mesa completa a los jugadores!\n"
+            f"• **Cierre (3 dados iguales):** ¡Cierras y barres la mesa con la jugada máxima imbatible!\n\n"
             f"¿Listo para agitar los 3 dados?",
             {
                 "inline_keyboard": [
@@ -306,27 +306,28 @@ def jugar_silo_cubano(username, action="roll"):
             f"¿El Banquero se recupera en la siguiente o pasa el banco al de la derecha?"
         )
 
-    # Regla 3: Triples
+    # Regla 3: CIERRE CUBANO (Cualquier número con los 3 dados iguales)
     elif dados[0] == dados[1] == dados[2]:
         val = dados[0]
-        if val == 6:
-            texto = (
-                f"🎲🎲🎲 *¡TRIPLE SEIS (6 - 6 - 6) - SILO MAYOR!*\n\n"
-                f"¡El banco barre la mesa sin piedad! Doble ganancia para el Banquero.\n"
-                f"La casa retiene su 10% de rake."
-            )
-        elif val == 1:
-            texto = (
-                f"🎲🎲🎲 *¡TRIPLE UNO (1 - 1 - 1) - MAJÁ NEGRO!*\n\n"
-                f"¡Desastre para el banco! Paga doble a todos los apostadores de la mesa."
-            )
-        else:
-            texto = (
-                f"🎲🎲🎲 *¡TRIPLE {val} ({val} - {val} - {val})!*\n\n"
-                f"Cierre maestro de triple. Punto casi invencible para defender la mesa."
-            )
+        pot = SILO_STATE["table_pot"]
+        rake = int(pot * (SILO_STATE["house_rake_pct"] / 100.0))
+        ganancia_banco = pot - rake
+        SILO_STATE["total_rake_collected"] += rake
+        SILO_STATE["bank_fund"] += ganancia_banco
+        SILO_STATE["table_pot"] = 300
+        SILO_STATE["last_result"] = f"¡CIERRE TOTAL ({val}-{val}-{val})! El Banco recogió {ganancia_banco} P66 (Casa cobró {rake} P66)."
 
-    # Regla 4: CIERRE (Par + Dado suelto que marca el punto)
+        texto = (
+            f"🔒🎲🎲🎲 *¡¡CIERRE TOTAL CUBANO (Triple {val}: {val} - {val} - {val})!!*\n\n"
+            f"Tirada del Banco: **[{dados[0]}] - [{dados[1]}] - [{dados[2]}]**\n\n"
+            f"🏆 **¡LOS 3 DADOS IGUALES CIERRAN LA MESA!**\n"
+            f"El jugador que tira contra la mesa (El Banco) gana con Cierre rotundo:\n"
+            f"• Bote recogido: *+{ganancia_banco} P66* para el Banquero ({SILO_STATE['current_banker']})\n"
+            f"• Comisión de la Casa (10%): *+{rake} P66* para la bóveda\n\n"
+            f"¡Cierre perfecto! ¿Tiras otra mano o corre el banco a la derecha?"
+        )
+
+    # Regla 4: Par + Tercer Dado Marca Punto
     elif dados[0] == dados[1] or dados[1] == dados[2] or dados[0] == dados[2]:
         if dados[0] == dados[1]:
             punto = dados[2]
