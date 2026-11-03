@@ -100,12 +100,12 @@ Para comenzar con buen pie: ¿de qué te gustaría hablar hoy?`,
       text: `¡Asere Comandante Max! Qué clase de orgullo tener **El Silo Cubano Tradicional (3 Dados)** y el Casino Criollo operando al 100%:
 
 🎲 **1. El Silo Cubano (3 Dados Callejeros):**
-• **El Banco:** Empieza un jugador con el banco; si lo quiere lo toma, si no, se lo pasa al de la derecha (siguiendo las manecillas del reloj).
-• **Apuestas:** Los jugadores apuestan una cantidad $X en la mesa contra el banco.
+• **¿Qué es El Banco?:** No es un banco de dinero ni del sistema; es la forma criolla de llamar al **jugador de la mesa que tira contra todos los demás apostadores**. Si no lo quiere, lo pasa al de la derecha por las manecillas del reloj.
+• **Apuestas:** Todos los demás jugadores apuestan una cantidad $X en la mesa contra el banco.
 • **Tirada del Banco (3 Dados):**
-  - **¡SILO (4-5-6) o el 6!:** ¡El banco recoge toda la mesa! La Casa retiene el **10% de comisión (rake)** y el banco se lleva el 90%.
+  - **¡SILO (4-5-6) o el 6!:** ¡El banco recoge toda la mesa! La Casa retiene el **10% de comisión (rake)** y el banquero cobra el resto.
   - **¡EL MAJÁ (1-2-3) o el 1!:** ¡El banco pierde! El banquero tiene que pagar obligatoriamente lo apostado en la mesa a todos los jugadores.
-  - **¡CIERRE!:** Si salen dos dados iguales (ej: [5, 5, 3]), el tercer dado es el Punto (**3**). El banco defiende su punto contra los tiros de los apostadores.
+  - **¡CIERRE!:** ¡Cualquier número con los **3 dados iguales (1-1-1 al 6-6-6)** es CIERRE! El que saca Cierre barre y gana la mesa con la jugada máxima. Si hay un par, el tercer dado marca el punto de defensa.
 
 🁣 **2. Dominó Cubano Doble 9 (55 fichas):**
 Salida con el [9|9]. Tranque con penalización, pases criollos y ¡Capicúa por las dos puntas que paga 4x!
