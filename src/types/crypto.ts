@@ -36,6 +36,7 @@ export interface CryptoTransaction {
 // CASINO 66 DEFINITIONS (TRADICIONAL CUBANO & CRIPTO)
 // ------------------------------------------
 export type CasinoGameType = 
+  | 'silo_cubano'     // El Silo Cubano Tradicional (3 dados, Banco, 4-5-6 Silo, 1-2-3 Majá, 10% Casa)
   | 'domino_cubano'   // Dominó Doble 9 Tradicional de Cuba
   | 'charada_cubana'  // La Charada Tradicional Cubana (1 al 100 y la Bolita Criolla)
   | 'poker_cubano'    // Cubilete Cubano con 5 Dados Criollos
