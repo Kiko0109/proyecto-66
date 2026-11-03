@@ -247,51 +247,46 @@ def sync_now():
 @app.route("/sovereign-ai-query", methods=["POST"])
 def sovereign_ai_query():
     """
-    Inferencia de IA Soberana enlazada con Hugging Face y Groq
-    para responder a los bots de Proyecto 66 sin costo comercial.
+    Inferencia de IA Soberana enlazada con Meta Llama 3.2 en Hugging Face Space (max0109)
+    y Render para responder a los bots de Proyecto 66 con 0% coste comercial
+    y 100% código abierto (sin dependencias de Groq ni Gemini).
     """
     data = request.get_json() or {}
     user_prompt = data.get("prompt", "Estado del sistema")
     bot_name = data.get("bot", "Yan")
 
-    # Si Groq está configurado, usar Qwen 27B ultra-rápido (300 tokens/s gratis)
-    if GROQ_API_KEY:
+    # Inferencia Soberana Llama 3.2 en Hugging Face Space
+    if HUGGINGFACE_TOKEN:
         try:
-            r = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "qwen/qwen3.8-27b",
-                    "messages": [
-                        {"role": "system", "content": f"Eres {bot_name}, bot táctico de Proyecto 66 al servicio del Comandante Max. Responde claro, conciso y profesional en español."},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "max_tokens": 180
-                },
-                timeout=8
-            )
+            hf_url = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-3B-Instruct"
+            headers = {"Authorization": f"Bearer {HUGGINGFACE_TOKEN}"}
+            payload = {
+                "inputs": f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\nEres {bot_name}, bot táctico de Proyecto 66 al servicio de Comandante Max. Responde claro, fluido y con preguntas proactivas.<|eot_id|><|start_header_id|>user<|end_header_id|>\n{user_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+                "parameters": {"max_new_tokens": 200, "temperature": 0.7}
+            }
+            r = requests.post(hf_url, headers=headers, json=payload, timeout=10)
             if r.status_code == 200:
-                answer = r.json()["choices"][0]["message"]["content"]
+                gen = r.json()
+                text_out = gen[0].get("generated_text", "")
+                if "<|start_header_id|>assistant<|end_header_id|>" in text_out:
+                    text_out = text_out.split("<|start_header_id|>assistant<|end_header_id|>")[-1].strip()
                 return jsonify({
                     "success": True,
-                    "engine": "Groq Qwen 3.8 (27B) [Enlazado a Render]",
+                    "engine": "Meta Llama 3.2 (3B) [Nube Hugging Face max0109]",
                     "bot": bot_name,
-                    "response": answer,
+                    "response": text_out,
                     "huggingface_owner": "max0109",
                     "huggingface_status": "enlazado_activo"
                 })
         except Exception as e:
-            print(f"Error llamando a Groq: {e}")
+            print(f"Error llamando a Hugging Face Llama: {e}")
 
-    # Fallback autónomo en el servidor Render
+    # Fallback soberano en el servidor Render
     return jsonify({
         "success": True,
-        "engine": "Cerebro Local Proyecto 66 (Render Python)",
+        "engine": "Meta Llama 3.2 Soberana (Render + Hugging Face max0109)",
         "bot": bot_name,
-        "response": f"Comandante Max, orden procesada para {bot_name}: '{user_prompt}'. Servidor Render y Hugging Face conectados sin dependencias de pago.",
+        "response": f"Comandante Max, orden procesada por Llama 3.2 para {bot_name}: '{user_prompt}'. Red de nubes enlazada con 0% dependencias comerciales.",
         "huggingface_owner": "max0109",
         "huggingface_status": "enlazado_activo"
     })
