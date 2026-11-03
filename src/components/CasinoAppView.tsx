@@ -829,30 +829,29 @@ export const CasinoAppView: React.FC = () => {
           playCyberSound('approve');
         }
       }
-      // 3. Triples
+      // 3. CIERRE CUBANO: CUALQUIER NÚMERO CON LOS 3 DADOS IGUALES (TRIPLES)
       else if (sorted[0] === sorted[1] && sorted[1] === sorted[2]) {
         const val = sorted[0];
-        if (val === 6) {
-          outcome = '🎲🎲🎲 ¡TRIPLE SEIS (6-6-6)! Silo Mayor. El banco barre la mesa por completo.';
-          if (siloRole === 'banco') {
-            const pot = siloTablePot * 2;
-            const rake = Math.floor(pot * 0.10);
-            const netWin = pot - rake;
-            addTransaction('casino_win', selectedToken, netWin, '¡Triple Seis Silo Mayor!');
-            refreshWallet();
-            setLastWin({ won: true, amount: netWin });
-            playCyberSound('approve');
-          }
-        } else if (val === 1) {
-          outcome = '🐍🐍🐍 ¡TRIPLE UNO (1-1-1)! Majá Negro. Desastre para el banco, paga doble.';
+        if (siloRole === 'banco') {
+          // El banco (jugador que tira contra la mesa) gana con Cierre rotundo
+          const pot = siloTablePot;
+          const rake = Math.floor(pot * 0.10);
+          const netWin = pot - rake;
+          setSiloHouseRakeCollected(prev => prev + rake);
+          setSiloTablePot(300);
+          addTransaction('casino_win', selectedToken, netWin, `¡CIERRE (Triple ${val}-${val}-${val})! El Banco recoge la mesa (Casa 10%: ${rake})`);
+          refreshWallet();
+          setLastWin({ won: true, amount: netWin });
+          outcome = `🔒🎲🎲🎲 ¡¡CIERRE TOTAL CUBANO (Triple ${val}: ${val}-${val}-${val})!! Los 3 dados iguales cierran la mesa. ¡El Banco recogió toda la mesa! Ganaste +${netWin.toLocaleString()} ${selectedToken} (La Casa retuvo 10% de rake: ${rake}).`;
+          playCyberSound('approve');
+        } else {
+          // Si el jugador era apostador frente al banco que tiró Cierre
+          outcome = `🔒🎲🎲🎲 ¡¡CIERRE DEL BANCO (Triple ${val}: ${val}-${val}-${val})!! El jugador del banco cerró la mesa con los 3 dados iguales y barre las apuestas. Pierdes tu apuesta frente al Cierre.`;
           setLastWin({ won: false, amount: 0 });
           playCyberSound('reject');
-        } else {
-          outcome = `🎲🎲🎲 ¡TRIPLE ${val}! Cierre de triple soberano.`;
-          playCyberSound('approve');
         }
       }
-      // 4. Cierre (Par + Dado suelto = Punto)
+      // 4. Par + Tercer Dado Marca Punto
       else if (sorted[0] === sorted[1] || sorted[1] === sorted[2] || sorted[0] === sorted[2]) {
         let par = 0;
         let punto = 0;
@@ -862,19 +861,19 @@ export const CasinoAppView: React.FC = () => {
 
         setSiloActivePoint(punto);
         if (punto === 6) {
-          outcome = `🎲🎲🎲 ¡CIERRE AL 6 ([${par}|${par}] + 6)! El banco gana la mano con punto alto de Silo.`;
+          outcome = `🎲🎲🎲 ¡PUNTO AL 6 ([${par}|${par}] + 6)! El banco gana la mano con punto alto de Silo.`;
           playCyberSound('approve');
         } else if (punto === 1) {
-          outcome = `🎲🎲🎲 ¡CIERRE AL 1 ([${par}|${par}] + 1)! Punto flojo de Majá. El banco queda en riesgo.`;
+          outcome = `🎲🎲🎲 ¡PUNTO AL 1 ([${par}|${par}] + 1)! Punto flojo de Majá. El banco queda en riesgo.`;
           playCyberSound('reject');
         } else {
-          outcome = `🎲🎲🎲 ¡CIERRE CUBANO: PUNTO EN EL ${punto}! (Par de ${par}). El banco defiende este número.`;
+          outcome = `🎲🎲🎲 ¡PUNTO EN EL ${punto}! (Par de ${par}). El banco defiende este número frente a la mesa.`;
           playCyberSound('click');
         }
       }
       // 5. Suelto
       else {
-        outcome = `🎲🎲🎲 TIRO SUELTO: [${sorted[0]}] - [${sorted[1]}] - [${sorted[2]}]. No hay par ni Silo. El banco vuelve a tirar.`;
+        outcome = `🎲🎲🎲 TIRO SUELTO: [${sorted[0]}] - [${sorted[1]}] - [${sorted[2]}]. No hay par, Silo ni Cierre. El banco vuelve a tirar.`;
         playCyberSound('click');
       }
 
@@ -1103,16 +1102,38 @@ export const CasinoAppView: React.FC = () => {
               </span>
             </div>
 
+            {/* Aclaración Criolla: El Banco & Cierre */}
+            <div className="p-3 rounded-xl bg-gradient-to-r from-amber-950/30 via-[#0b172a] to-amber-950/20 border border-amber-500/40 text-[11px] space-y-1.5 leading-relaxed text-gray-300">
+              <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                <span>Reglas Criollas del Silo Callejero (3 Dados)</span>
+              </div>
+              <p>
+                <strong className="text-white">¿Quién es El Banco?</strong> No es un banco financiero ni el sistema; es simplemente el <span className="text-amber-300 font-semibold">jugador que tira contra toda la mesa</span>. Si no quiere el banco, lo corre a la derecha por las manecillas del reloj.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-1 text-[10px]">
+                <span className="p-1.5 rounded bg-black/40 border border-emerald-500/40 text-emerald-300">
+                  🏆 <strong>Silo o el 6 (4-5-6):</strong> El banco recoge todo (-10% comisión casa).
+                </span>
+                <span className="p-1.5 rounded bg-black/40 border border-rose-500/40 text-rose-300">
+                  🐍 <strong>El Majá o el 1 (1-2-3):</strong> El banco pierde y paga lo apostado en mesa.
+                </span>
+                <span className="p-1.5 rounded bg-black/40 border border-cyan-500/40 text-cyan-300">
+                  🔒 <strong>Cierre (3 dados iguales):</strong> Triple 1 al 6 cierra y barre la mesa.
+                </span>
+              </div>
+            </div>
+
             {/* Banco y Mesa Status Bar */}
             <div className="p-3.5 rounded-xl bg-[#020510] border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <Crown className="w-4 h-4 text-amber-400" />
-                <span className="text-gray-400">Banquero Actual:</span>
+                <span className="text-gray-400">Banquero de Turno:</span>
                 <strong className="text-white">{siloBankerName}</strong>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
                   siloRole === 'banco' ? 'bg-amber-400 text-black' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                 }`}>
-                  {siloRole === 'banco' ? 'Eres el Banco' : 'Apostador en Mesa'}
+                  {siloRole === 'banco' ? 'Tiras Contra Toda la Mesa' : 'Apostador en Mesa'}
                 </span>
               </div>
 
@@ -1155,13 +1176,13 @@ export const CasinoAppView: React.FC = () => {
               {/* Status Tags */}
               <div className="flex flex-wrap items-center justify-center gap-2 text-[11px]">
                 <span className="px-2.5 py-1 rounded bg-gray-900 border border-emerald-500/40 text-emerald-400 font-bold">
-                  Silo (4-5-6): Banco Recoge Todo (-10% Casa)
+                  Silo (4-5-6): Banco Recoge (-10% Casa)
                 </span>
                 <span className="px-2.5 py-1 rounded bg-gray-900 border border-rose-500/40 text-rose-400 font-bold">
                   El Majá (1-2-3): Banco Paga Mesa
                 </span>
                 <span className="px-2.5 py-1 rounded bg-gray-900 border border-cyan-500/40 text-cyan-400 font-bold">
-                  Cierre: Par + Tercer Dado Marca Punto
+                  Cierre: 3 Dados Iguales (Cierra la Mesa)
                 </span>
               </div>
             </div>
