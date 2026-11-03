@@ -134,11 +134,9 @@ export const CasinoAppView: React.FC = () => {
   };
 
   const handleBetChange = (amount: number) => {
-    if (selectedToken === 'P66') {
-      setBetAmount(Math.max(10, Math.min(amount, wallet.p66Balance)));
-    } else {
-      setBetAmount(Math.max(1, Math.min(amount, wallet.usdtBalance)));
-    }
+    // Apuestas 100% libres: cada jugador apuesta la cantidad que desee
+    const val = isNaN(amount) ? 1 : Math.max(1, Math.floor(amount));
+    setBetAmount(val);
   };
 
   // ==========================================
@@ -1051,39 +1049,54 @@ export const CasinoAppView: React.FC = () => {
         {/* Bet Controller Bar */}
         <div className="mb-4 p-3 rounded-xl bg-[#020510] border border-gray-800 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Apuesta ({selectedToken}):</span>
+            <span className="text-xs text-gray-300 font-semibold">Apuesta Libre ({selectedToken}):</span>
             <input
               type="number"
+              min="1"
               value={betAmount}
               onChange={(e) => handleBetChange(Number(e.target.value))}
-              className="w-24 px-2 py-1 rounded bg-[#030712] border border-[#00f0ff]/40 text-[#00f0ff] text-xs font-bold text-center focus:outline-none"
+              placeholder="Monto libre"
+              className="w-28 px-2.5 py-1.5 rounded bg-[#030712] border border-[#00f0ff]/40 text-[#00f0ff] text-xs font-black text-center focus:outline-none focus:border-[#00f0ff] shadow-inner"
             />
+            <span className="text-[10px] text-gray-500 hidden sm:inline">(escribe la cantidad que quieras)</span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[11px]">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
             <button
-              onClick={() => handleBetChange(selectedToken === 'P66' ? 50 : 2)}
-              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-[#00f0ff]/20 text-gray-300 border border-gray-800"
+              onClick={() => handleBetChange(betAmount + 50)}
+              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold"
             >
-              Min
+              +50
+            </button>
+            <button
+              onClick={() => handleBetChange(betAmount + 100)}
+              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold"
+            >
+              +100
+            </button>
+            <button
+              onClick={() => handleBetChange(betAmount + 500)}
+              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold"
+            >
+              +500
             </button>
             <button
               onClick={() => handleBetChange(betAmount * 2)}
-              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-[#00f0ff]/20 text-gray-300 border border-gray-800"
+              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-[#00f0ff]/20 text-gray-300 border border-gray-800 font-bold"
             >
               2x
             </button>
             <button
               onClick={() => handleBetChange(Math.floor(betAmount / 2))}
-              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-[#00f0ff]/20 text-gray-300 border border-gray-800"
+              className="px-2 py-1 rounded bg-[#050c1e] hover:bg-[#00f0ff]/20 text-gray-300 border border-gray-800 font-bold"
             >
               1/2
             </button>
             <button
               onClick={() => handleBetChange(selectedToken === 'P66' ? wallet.p66Balance : wallet.usdtBalance)}
-              className="px-2 py-1 rounded bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/30 font-bold"
+              className="px-2 py-1 rounded bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/30 font-black"
             >
-              Max
+              Todo
             </button>
           </div>
         </div>
