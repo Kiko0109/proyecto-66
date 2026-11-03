@@ -312,6 +312,157 @@ def self_improve():
         "server_disk_used": "0 MB (Persistido en Nube)"
     })
 
+# ====================================================================
+# WEBHOOK INTERACTIVO DE TELEGRAM (CHATBOT + CALL OF DUTY + CASINO 24/7)
+# ====================================================================
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8668948666:AAHODmFmrhE6XLAzGbOiw6jBaETvIlMeX28")
+RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL", "https://proyecto-66.onrender.com")
+
+@app.route("/set-telegram-webhook", methods=["GET", "POST"])
+def set_telegram_webhook():
+    """Registra automáticamente este servidor en Telegram"""
+    webhook_url = f"{RENDER_EXTERNAL_URL}/telegram-webhook"
+    tg_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
+    try:
+        r = requests.post(tg_url, json={"url": webhook_url, "drop_pending_updates": False}, timeout=10)
+        return jsonify({
+            "success": r.status_code == 200,
+            "telegram_response": r.json() if r.status_code == 200 else r.text,
+            "webhook_url": webhook_url
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/telegram-webhook", methods=["POST"])
+def telegram_webhook():
+    """
+    Recibe en tiempo real cada mensaje enviado a @Yan0109bot por Max,
+    en chats privados, canales o grupos de Telegram, y responde al instante.
+    """
+    try:
+        data = request.get_json(force=True) or {}
+        msg = data.get("message") or data.get("channel_post") or data.get("edited_message") or {}
+        text = msg.get("text", "").strip()
+        chat = msg.get("chat", {})
+        chat_id = chat.get("id")
+        user = msg.get("from", {})
+        username = user.get("username") or user.get("first_name") or "Comandante Max"
+
+        if not chat_id or not text:
+            return jsonify({"ok": True, "note": "mensaje sin texto o id"})
+
+        lower = text.lower()
+        response_text = ""
+
+        # 1. Comandos de Call of Duty + Delta Force + Free Fire
+        if lower.startswith("/cod") or "call of duty" in lower or "delta force" in lower or "free fire" in lower:
+            response_text = (
+                f"🪖 *COMMAND OPS 66 • ZONA DE COMBATE TÁCTICO*\n"
+                f"*(Fusión Call of Duty + Delta Force + Free Fire)*\n\n"
+                f"¡Afirmativo, Operador {username}! Desplegando en sector táctico:\n"
+                f"• *Operador:* Max Táctico (Ghost Recon 66)\n"
+                f"• *Armamento:* MCW Asalto + Striker 9 + Blindaje Nivel 3\n"
+                f"• *Vehículo de Incursión:* Tanque Havoc & Buggy de Zona Segura\n"
+                f"• *Racha de Bajas:* UAV Satelital (3 bajas consecutivas)\n\n"
+                f"🎯 *Órdenes de combate rápidas:*\n"
+                f"1. Escribe `/disparar` para abatir patrulla hostil.\n"
+                f"2. Escribe `/racha` para solicitar bombardeo de racimo.\n"
+                f"3. Escribe `/escuadron` para sincronizar con tu clan en el grupo."
+            )
+        elif lower.startswith("/disparar"):
+            import random
+            bajas = random.randint(2, 6)
+            puntos = bajas * 150
+            response_text = (
+                f"💥 *¡CONTACTO ENEMIGO NEUTRALIZADO!*\n\n"
+                f"Operador {username}, abates a *{bajas} enemigos* en la zona segura.\n"
+                f"• Puntos sumados al clan: *+{puntos} XP*\n"
+                f"• Botín virtual: *+{bajas * 10} $WARC*\n"
+                f"• Estado: Posición asegurada. Siguiente círculo táctico cerrado."
+            )
+        elif lower.startswith("/racha"):
+            response_text = (
+                f"📡 *¡RACHA DE BAJAS ACTIVADA: BOMBARDERO DE RACIMO!*\n\n"
+                f"Operador {username}, el ataque aéreo arrasa la trinchera enemiga.\n"
+                f"• Bajas causadas: *5 operadores*\n"
+                f"• Racha activa: *7 bajas sin morir*\n"
+                f"• ¡Tu clan lidera el ranking del servidor!"
+            )
+        elif lower.startswith("/casino"):
+            response_text = (
+                f"🎰 *CASINO REAL EL 66 & EL 88*\n\n"
+                f"Bienvenido a las mesas de juego virtuales, {username}:\n"
+                f"• 🁣 *Dominó Cubano Doble 9* (55 fichas)\n"
+                f"• 🃏 *Póker Texas Hold'em* (Cartas y torneos)\n"
+                f"• 🎲 *Ruleta & Dados de la Suerte*\n\n"
+                f"Escribe `/dados` o `/ruleta` para girar tu suerte ahora."
+            )
+        elif lower.startswith("/dados") or lower.startswith("/ruleta"):
+            import random
+            dado1 = random.randint(1, 6)
+            dado2 = random.randint(1, 6)
+            total = dado1 + dado2
+            ganancia = 100 if total >= 7 else -50
+            response_text = (
+                f"🎲 *TIRADA DE DADOS DEL CASINO 66*\n\n"
+                f"Resultado: *[{dado1}] + [{dado2}] = {total}*\n"
+                f"{'🎉 ¡VICTORIA! +100 $WARC virtuales sumados' if ganancia > 0 else '⚠️ Tirada baja. Saldo ajustado en -50 $WARC'}\n"
+                f"¡Las mesas virtuales continúan abiertas!"
+            )
+        elif lower.startswith("/apuesta") or lower.startswith("/apuestas"):
+            response_text = (
+                f"🏆 *APUESTAS DEPORTIVAS TÁCTICAS (CUOTAS VIRTUALES)*\n\n"
+                f"1. ⚽ Real Madrid vs Manchester City — Cuota: 2.10\n"
+                f"2. ⚾ Industriales vs Santiago de Cuba — Cuota: 1.85\n"
+                f"3. 🥊 UFC Pelea Estelar — Cuota: 1.65\n\n"
+                f"Escribe `/saldo` para ver tus fichas o haz tu jugada táctica."
+            )
+        elif lower.startswith("/saldo"):
+            response_text = (
+                f"💰 *BALANCE DE CUENTA VIRTUAL ({username})*\n\n"
+                f"• Fichas $WARC: *15,450 fichas*\n"
+                f"• Monedas P66: *2,800 P66*\n"
+                f"• Rango Militar: *Capitán de Operaciones Especiales*\n"
+                f"• Nube: *Render 24/7 + Hugging Face Llama 3.2 Activos*"
+            )
+        elif lower.startswith("/clanes") or lower.startswith("/escuadron"):
+            response_text = (
+                f"🛡️ *TOP CLANES OFICIALES (LIGA 66)*\n\n"
+                f"1. 🥇 *Ghost Recon 66* — Líder: Kiko (DEV-02) • 1,450 PTS\n"
+                f"2. 🥈 *Shadow Company* — Líder: MAX0109 • 1,320 PTS\n"
+                f"3. 🥉 *Delta Force Unit* — Líder: Sniper66 • 1,190 PTS\n\n"
+                f"¡Compite en `/cod` para subir de rango con tu escuadrón!"
+            )
+        elif lower in ("hola", "buenas", "buenas tardes", "buenas noches", "buenos dias", "hey", "/start"):
+            response_text = (
+                f"¡Hola {username}! ¿En qué puedo ayudarte?\n\n"
+                f"Soy *Yan (CORE-01)*, el bot táctico de Proyecto 66. Estoy activo 24/7 en tu servidor para coordinar:\n"
+                f"• 🪖 *Call of Duty + Delta Force + Free Fire* (`/cod`)\n"
+                f"• 🎰 *Casino Real 66 & 88* (`/casino`)\n"
+                f"• 🏆 *Apuestas Deportivas* (`/apuesta`)\n"
+                f"• 💬 *IA y Comandos:* Puedes hablarme o preguntarme lo que quieras.\n\n"
+                f"¿Deseas desplegar una partida de combate o probar suerte en el casino hoy?"
+            )
+        else:
+            # Respuesta inteligente conversacional
+            response_text = (
+                f"¡Entendido, {username}! He procesado tu mensaje: *"{text}"*\n\n"
+                f"Tu sistema táctico está activo en la nube sin consumir batería de tu teléfono. ¿Quieres que preparemos armamento para Call of Duty, tiremos los dados en el Casino o tienes alguna duda que quieras resolver?"
+            )
+
+        # Enviar mensaje de vuelta a Telegram mediante API oficial
+        send_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        requests.post(send_url, json={
+            "chat_id": chat_id,
+            "text": response_text,
+            "parse_mode": "Markdown"
+        }, timeout=8)
+
+        return jsonify({"ok": True, "chat_id": chat_id})
+    except Exception as e:
+        print(f"Error procesando webhook telegram: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 200
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
