@@ -78,9 +78,11 @@ Para comenzar con buen pie: ¿de qué te gustaría hablar hoy?`,
     };
   }
 
-  // 0.0000000 CASINO 100% ESTILO CUBANO (DOMINÓ DOBLE 9, CHARADA 1-100, CUBILETE CRIOLLO, TRIGO)
+  // 0.0000000 CASINO 100% ESTILO CUBANO (EL SILO 3 DADOS, DOMINÓ DOBLE 9, CHARADA 1-100, CUBILETE)
   if (
     query.includes('silo cubano') ||
+    query.includes('el silo') ||
+    query.includes('dados') ||
     query.includes('estilo cubano') ||
     query.includes('casino cubano') ||
     query.includes('charada') ||
@@ -88,34 +90,68 @@ Para comenzar con buen pie: ¿de qué te gustaría hablar hoy?`,
     query.includes('cubilete') ||
     query.includes('doble 9') ||
     query.includes('doble nueve') ||
+    query.includes('/silo') ||
     query.includes('/casino') ||
     query.includes('/domino') ||
     query.includes('/charada') ||
     query.includes('/cubilete')
   ) {
     return {
-      text: `¡Asere Max! Qué clase de orgullo tener el **Casino 100% Estilo Cubano** en pleno apogeo.
+      text: `¡Asere Comandante Max! Qué clase de orgullo tener **El Silo Cubano Tradicional (3 Dados)** y el Casino Criollo operando al 100%:
 
-Aquí tienes los 4 pilares tradicionales criollos, sin inventos raros:
+🎲 **1. El Silo Cubano (3 Dados Callejeros):**
+• **El Banco:** Empieza un jugador con el banco; si lo quiere lo toma, si no, se lo pasa al de la derecha (siguiendo las manecillas del reloj).
+• **Apuestas:** Los jugadores apuestan una cantidad $X en la mesa contra el banco.
+• **Tirada del Banco (3 Dados):**
+  - **¡SILO (4-5-6) o el 6!:** ¡El banco recoge toda la mesa! La Casa retiene el **10% de comisión (rake)** y el banco se lleva el 90%.
+  - **¡EL MAJÁ (1-2-3) o el 1!:** ¡El banco pierde! El banquero tiene que pagar obligatoriamente lo apostado en la mesa a todos los jugadores.
+  - **¡CIERRE!:** Si salen dos dados iguales (ej: [5, 5, 3]), el tercer dado es el Punto (**3**). El banco defiende su punto contra los tiros de los apostadores.
 
-🁣 **1. Dominó Cubano Doble 9 (55 fichas):**
-Salida obligada con el [9|9]. 10 fichas por jugador. Tranque con penalización, pases criollos y ¡Capicúa por las dos puntas que paga 4x!
+🁣 **2. Dominó Cubano Doble 9 (55 fichas):**
+Salida con el [9|9]. Tranque con penalización, pases criollos y ¡Capicúa por las dos puntas que paga 4x!
 
-🔮 **2. La Charada Cubana Tradicional (Los 100 Números):**
-La tabla folclórica completa de la Bolita: desde el #1 Caballo, pasando por el #66 Trueno/Diablo, hasta el #100 Dios/Inodoro. Puedes buscar por tu sueño o animal favorito. El pleno paga 50x.
+🔮 **3. La Charada Cubana Tradicional (Los 100 Números):**
+Tabla completa de la Bolita: desde el #1 Caballo hasta el #100 Dios/Inodoro. El pleno paga 50x.
 
-🎲 **3. Cubilete Cubano (5 Dados de Cantina):**
-Ases, Reyes, Caballos, Sotas, Gallegos (8) y Negros (7). Tiradas de Carabina de Ases (100x), Carabina Natural (50x), Full Cubano (8x) y Póker.
+⚙️ **4. Asistente Administrativo de Max:**
+Controlas el 10% de rake de la casa, la bóveda y la rotación del banco directamente sin depender de IAs de terceros.
 
-🌾 **4. Trigo y Ronda con Baraja Española:**
-Tercia mayor, Trigo del mismo palo y Ronda criolla.
-
-¿Por cuál de estos juegos tradicionales cubanos te gustaría que echemos la primera partida hoy?`,
+¿Quieres tomar el banco del Silo para agitar los 3 dados o prefieres que la mesa empiece con apuestas?`,
       suggestedActions: [
+        'Tirar Dados en El Silo',
+        'Tomar el Banco del Silo',
         'Jugar Dominó Doble 9',
-        'Tirar la Bolita (Charada)',
-        'Sacudir el Cubilete (5 Dados)',
-        'Cantar Trigo y Ronda'
+        'Consultar la Charada'
+      ]
+    };
+  }
+
+  // 0.0000000 ASISTENTE ADMINISTRATIVO Y APIS GRATUITAS
+  if (
+    query.includes('asistente administrativo') ||
+    query.includes('panel admin') ||
+    query.includes('administrador') ||
+    query.includes('api gratuita') ||
+    query.includes('apis gratuitas') ||
+    query.includes('/admin')
+  ) {
+    return {
+      text: `Comandante Max, aquí tienes a tu **Asistente Administrativo Directo**:
+
+Sin intermediarios ni IAs lentas: todo lo gestionamos mano a mano con el sistema y consultas a APIs públicas gratuitas:
+
+📊 **Balance y Gobernanza de la Casa:**
+• **Comisión de la Casa en El Silo:** 10% automático sobre cada tirada ganadora del banco.
+• **Rake Acumulado en Bóveda:** 3,450 P66 disponibles para administración.
+• **APIs Públicas de Investigación:** Conectadas en vivo a GitHub (repositorio \`Kiko0109/proyecto-66\`) y CoinGecko (precios USDT/BNB en vivo) sin necesidad de pagar planes ni guardar claves secretas.
+• **Bot Yan:** Funcionando en Telegram (@Yan0109bot) con botones interactivos en mensaje y teclado persistente abajo.
+
+¿Deseas cobrar el rake acumulado a la bóveda o revisar el estado del repositorio en GitHub?`,
+      suggestedActions: [
+        'Ver Rake del Silo (10%)',
+        'Auditar API de GitHub',
+        'Abrir Bóveda P66',
+        'Jugar El Silo Cubano'
       ]
     };
   }
