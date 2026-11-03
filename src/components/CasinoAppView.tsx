@@ -26,7 +26,7 @@ import { CHARADA_TRADICIONAL_DATA, CharadaItem } from '../data/charadaCubana';
 
 export const CasinoAppView: React.FC = () => {
   const [wallet, setWallet] = useState<CryptoWalletState>(loadCryptoWallet);
-  const [activeGame, setActiveGame] = useState<CasinoGameType>('domino_cubano');
+  const [activeGame, setActiveGame] = useState<CasinoGameType>('silo_cubano');
   const [selectedToken, setSelectedToken] = useState<'P66' | 'USDT'>('P66');
   const [betAmount, setBetAmount] = useState<number>(100);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -112,6 +112,17 @@ export const CasinoAppView: React.FC = () => {
     CUBILETE_FACES[4]
   ]);
   const [cubiletePlayName, setCubiletePlayName] = useState<string | null>(null);
+
+  // ==========================================
+  // 7. EL SILO CUBANO (3 DADOS TRADICIONALES CALLEJEROS)
+  // ==========================================
+  const [siloDice, setSiloDice] = useState<[number, number, number]>([4, 5, 6]);
+  const [siloRole, setSiloRole] = useState<'banco' | 'apostador'>('banco');
+  const [siloBankerName, setSiloBankerName] = useState<string>('Comandante Max (Tú)');
+  const [siloTablePot, setSiloTablePot] = useState<number>(600); // Bote en mesa
+  const [siloHouseRakeCollected, setSiloHouseRakeCollected] = useState<number>(3450); // Rake 10%
+  const [siloActivePoint, setSiloActivePoint] = useState<number | null>(null);
+  const [siloRollOutcome, setSiloRollOutcome] = useState<string>('¡SILO SOBERANO (4-5-6)! El banco recoge la mesa.');
 
   // Sync wallet
   useEffect(() => {
@@ -729,6 +740,150 @@ export const CasinoAppView: React.FC = () => {
     }, 850);
   };
 
+  // ==========================================
+  // LOGICA 7: EL SILO CUBANO (3 DADOS TRADICIONALES)
+  // ==========================================
+  const passSiloBank = () => {
+    const nextBanker = siloBankerName.includes('Max') ? 'Jugador de la Derecha (Turno Rotativo)' : 'Comandante Max (Tú)';
+    setSiloBankerName(nextBanker);
+    setSiloRole(nextBanker.includes('Max') ? 'banco' : 'apostador');
+    setGameMessage(`🔄 El banco corrió en el sentido de las manecillas del reloj hacia la derecha. Banquero actual: ${nextBanker}.`);
+    playCyberSound('click');
+  };
+
+  const takeSiloBank = () => {
+    setSiloBankerName('Comandante Max (Tú)');
+    setSiloRole('banco');
+    setGameMessage('👑 ¡Has tomado el Banco del Silo Cubano! Defiendes la mesa contra las apuestas de los jugadores.');
+    playCyberSound('approve');
+  };
+
+  const betToSiloTable = () => {
+    const curBalance = selectedToken === 'P66' ? wallet.p66Balance : wallet.usdtBalance;
+    if (curBalance < betAmount) {
+      setGameMessage('Saldo insuficiente para apostar en la mesa');
+      return;
+    }
+    addTransaction('casino_bet', selectedToken, betAmount, 'Apuesta en Mesa de El Silo Cubano');
+    refreshWallet();
+    setSiloTablePot(prev => prev + betAmount);
+    setGameMessage(`💵 Has colocado +${betAmount} ${selectedToken} en la mesa del Silo.`);
+    playCyberSound('click');
+  };
+
+  const playSiloRoll = () => {
+    const curBalance = selectedToken === 'P66' ? wallet.p66Balance : wallet.usdtBalance;
+    if (siloRole === 'banco' && curBalance < betAmount) {
+      setGameMessage('Saldo insuficiente para cubrir el banco');
+      return;
+    }
+
+    setIsProcessing(true);
+    playCyberSound('click');
+
+    setTimeout(() => {
+      const d1 = Math.floor(Math.random() * 6) + 1;
+      const d2 = Math.floor(Math.random() * 6) + 1;
+      const d3 = Math.floor(Math.random() * 6) + 1;
+      const sorted: [number, number, number] = [d1, d2, d3].sort((a, b) => a - b) as [number, number, number];
+      setSiloDice(sorted);
+
+      let outcome = '';
+
+      // 1. SILO (4, 5, 6)
+      if (sorted[0] === 4 && sorted[1] === 5 && sorted[2] === 6) {
+        if (siloRole === 'banco') {
+          // El banco recoge la mesa, la casa retiene 10%
+          const pot = siloTablePot;
+          const rake = Math.floor(pot * 0.10);
+          const netWin = pot - rake;
+          setSiloHouseRakeCollected(prev => prev + rake);
+          setSiloTablePot(300);
+          addTransaction('casino_win', selectedToken, netWin, `¡SILO 4-5-6! El Banco recogió la mesa (Casa 10%: ${rake})`);
+          refreshWallet();
+          setLastWin({ won: true, amount: netWin });
+          outcome = `🎲🎲🎲 ¡¡SILOOOOO CUBANO (4-5-6)!! ¡El Banco recogió toda la mesa! Ganaste +${netWin.toLocaleString()} ${selectedToken} (La Casa retuvo 10% de rake: ${rake}).`;
+          playCyberSound('approve');
+        } else {
+          // Si el jugador era apostador contra el banco
+          outcome = '🎲🎲🎲 ¡SILO 4-5-6 del Banco! El banco recogió todo lo de la mesa. Pierdes tu apuesta.';
+          setLastWin({ won: false, amount: 0 });
+          playCyberSound('reject');
+        }
+      }
+      // 2. EL MAJÁ (1, 2, 3)
+      else if (sorted[0] === 1 && sorted[1] === 2 && sorted[2] === 3) {
+        if (siloRole === 'banco') {
+          // El banco pierde y tiene que pagar la mesa
+          const pago = siloTablePot;
+          outcome = `🐍🐍🐍 ¡EL MAJÁ CUBANO (1-2-3)! El banco perdió y debe pagar todo lo apostado en la mesa (-${pago} ${selectedToken}).`;
+          setLastWin({ won: false, amount: 0 });
+          playCyberSound('reject');
+        } else {
+          // Apostador gana
+          const winAmount = betAmount * 2;
+          addTransaction('casino_win', selectedToken, winAmount, '¡El Banco tiró El Majá (1-2-3)! Cobras tu apuesta completa');
+          refreshWallet();
+          setLastWin({ won: true, amount: winAmount });
+          outcome = `🐍 ¡EL BANCO TIRÓ EL MAJÁ (1-2-3)! Cobraste tu apuesta al 100% (+${winAmount.toLocaleString()} ${selectedToken}).`;
+          playCyberSound('approve');
+        }
+      }
+      // 3. Triples
+      else if (sorted[0] === sorted[1] && sorted[1] === sorted[2]) {
+        const val = sorted[0];
+        if (val === 6) {
+          outcome = '🎲🎲🎲 ¡TRIPLE SEIS (6-6-6)! Silo Mayor. El banco barre la mesa por completo.';
+          if (siloRole === 'banco') {
+            const pot = siloTablePot * 2;
+            const rake = Math.floor(pot * 0.10);
+            const netWin = pot - rake;
+            addTransaction('casino_win', selectedToken, netWin, '¡Triple Seis Silo Mayor!');
+            refreshWallet();
+            setLastWin({ won: true, amount: netWin });
+            playCyberSound('approve');
+          }
+        } else if (val === 1) {
+          outcome = '🐍🐍🐍 ¡TRIPLE UNO (1-1-1)! Majá Negro. Desastre para el banco, paga doble.';
+          setLastWin({ won: false, amount: 0 });
+          playCyberSound('reject');
+        } else {
+          outcome = `🎲🎲🎲 ¡TRIPLE ${val}! Cierre de triple soberano.`;
+          playCyberSound('approve');
+        }
+      }
+      // 4. Cierre (Par + Dado suelto = Punto)
+      else if (sorted[0] === sorted[1] || sorted[1] === sorted[2] || sorted[0] === sorted[2]) {
+        let par = 0;
+        let punto = 0;
+        if (sorted[0] === sorted[1]) { par = sorted[0]; punto = sorted[2]; }
+        else if (sorted[1] === sorted[2]) { par = sorted[1]; punto = sorted[0]; }
+        else { par = sorted[0]; punto = sorted[1]; }
+
+        setSiloActivePoint(punto);
+        if (punto === 6) {
+          outcome = `🎲🎲🎲 ¡CIERRE AL 6 ([${par}|${par}] + 6)! El banco gana la mano con punto alto de Silo.`;
+          playCyberSound('approve');
+        } else if (punto === 1) {
+          outcome = `🎲🎲🎲 ¡CIERRE AL 1 ([${par}|${par}] + 1)! Punto flojo de Majá. El banco queda en riesgo.`;
+          playCyberSound('reject');
+        } else {
+          outcome = `🎲🎲🎲 ¡CIERRE CUBANO: PUNTO EN EL ${punto}! (Par de ${par}). El banco defiende este número.`;
+          playCyberSound('click');
+        }
+      }
+      // 5. Suelto
+      else {
+        outcome = `🎲🎲🎲 TIRO SUELTO: [${sorted[0]}] - [${sorted[1]}] - [${sorted[2]}]. No hay par ni Silo. El banco vuelve a tirar.`;
+        playCyberSound('click');
+      }
+
+      setSiloRollOutcome(outcome);
+      setGameMessage(outcome);
+      setIsProcessing(false);
+    }, 800);
+  };
+
   return (
     <div className="space-y-4 font-mono">
       {/* Top Banner: Balances & Token Selector */}
@@ -808,6 +963,20 @@ export const CasinoAppView: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         <button
           onClick={() => {
+            setActiveGame('silo_cubano');
+            playCyberSound('click');
+          }}
+          className={`p-2.5 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
+            activeGame === 'silo_cubano'
+              ? 'bg-[#00f0ff]/15 border-[#00f0ff] text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+              : 'bg-[#050c1e] border-gray-800 text-gray-400 hover:text-white'
+          }`}
+        >
+          <span>🎲 El Silo (3 Dados)</span>
+        </button>
+
+        <button
+          onClick={() => {
             setActiveGame('domino_cubano');
             playCyberSound('click');
           }}
@@ -875,20 +1044,6 @@ export const CasinoAppView: React.FC = () => {
         >
           <span>♠️ El Solo Cubano</span>
         </button>
-
-        <button
-          onClick={() => {
-            setActiveGame('poker_cartas');
-            playCyberSound('click');
-          }}
-          className={`p-2.5 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all ${
-            activeGame === 'poker_cartas'
-              ? 'bg-[#00f0ff]/15 border-[#00f0ff] text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.25)]'
-              : 'bg-[#050c1e] border-gray-800 text-gray-400 hover:text-white'
-          }`}
-        >
-          <span>🃏 Póker Clásico</span>
-        </button>
       </div>
 
       {/* Main Game Card */}
@@ -933,6 +1088,114 @@ export const CasinoAppView: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* ==================================================== */}
+        {/* GAME: EL SILO CUBANO (3 DADOS TRADICIONALES)        */}
+        {/* ==================================================== */}
+        {activeGame === 'silo_cubano' && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between border-b border-gray-800 pb-2 text-xs gap-2">
+              <span className="font-bold text-white flex items-center gap-1.5">
+                🎲 El Silo Cubano (3 Dados Tradicionales Callejeros)
+              </span>
+              <span className="text-amber-400">
+                Silo (4-5-6) Banco Recoge • Majá (1-2-3) Banco Paga • Casa: 10% Rake
+              </span>
+            </div>
+
+            {/* Banco y Mesa Status Bar */}
+            <div className="p-3.5 rounded-xl bg-[#020510] border border-amber-500/30 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-amber-400" />
+                <span className="text-gray-400">Banquero Actual:</span>
+                <strong className="text-white">{siloBankerName}</strong>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                  siloRole === 'banco' ? 'bg-amber-400 text-black' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                }`}>
+                  {siloRole === 'banco' ? 'Eres el Banco' : 'Apostador en Mesa'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <span className="text-gray-400">
+                  Bote en Mesa: <strong className="text-emerald-400 font-bold">{siloTablePot.toLocaleString()} {selectedToken}</strong>
+                </span>
+                <span className="text-gray-500">|</span>
+                <span className="text-amber-400/90 text-[11px]">
+                  Rake Casa (10%): <strong>{siloHouseRakeCollected.toLocaleString()} P66</strong>
+                </span>
+              </div>
+            </div>
+
+            {/* 3 Dados Cubanos Mat */}
+            <div className="p-6 rounded-2xl bg-gradient-to-b from-[#0b172a] to-[#030712] border border-amber-500/30 flex flex-col items-center justify-center space-y-4 shadow-inner">
+              <div className="text-center">
+                <div className="text-[11px] text-amber-400 uppercase tracking-widest font-black">
+                  Tirada de los 3 Dados
+                </div>
+                {siloRollOutcome && (
+                  <div className="text-xs sm:text-sm font-bold text-white mt-1 max-w-lg">
+                    {siloRollOutcome}
+                  </div>
+                )}
+              </div>
+
+              {/* 3 Large Dice */}
+              <div className="flex items-center justify-center gap-4 sm:gap-6 py-2">
+                {siloDice.map((dVal, idx) => (
+                  <div
+                    key={idx}
+                    className="w-16 sm:w-20 h-16 sm:h-20 rounded-2xl bg-amber-50 text-slate-950 font-black text-3xl sm:text-4xl flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.3)] border-4 border-amber-400 transform hover:scale-105 transition-all select-none"
+                  >
+                    {dVal}
+                  </div>
+                ))}
+              </div>
+
+              {/* Status Tags */}
+              <div className="flex flex-wrap items-center justify-center gap-2 text-[11px]">
+                <span className="px-2.5 py-1 rounded bg-gray-900 border border-emerald-500/40 text-emerald-400 font-bold">
+                  Silo (4-5-6): Banco Recoge Todo (-10% Casa)
+                </span>
+                <span className="px-2.5 py-1 rounded bg-gray-900 border border-rose-500/40 text-rose-400 font-bold">
+                  El Majá (1-2-3): Banco Paga Mesa
+                </span>
+                <span className="px-2.5 py-1 rounded bg-gray-900 border border-cyan-500/40 text-cyan-400 font-bold">
+                  Cierre: Par + Tercer Dado Marca Punto
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+              <button
+                onClick={playSiloRoll}
+                disabled={isProcessing}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black text-xs uppercase shadow-[0_0_15px_rgba(245,158,11,0.4)] hover:opacity-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <Dice5 className="w-4 h-4" />
+                {isProcessing ? 'RODANDO DADOS...' : 'TIRAR LOS 3 DADOS'}
+              </button>
+
+              <button
+                onClick={betToSiloTable}
+                disabled={isProcessing}
+                className="py-3 px-4 rounded-xl bg-[#050c1e] hover:bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/40 font-bold text-xs uppercase shadow-md flex items-center justify-center gap-1.5"
+              >
+                <Coins className="w-4 h-4" />
+                APOSTAR +{betAmount} A LA MESA
+              </button>
+
+              <button
+                onClick={siloRole === 'banco' ? passSiloBank : takeSiloBank}
+                className="py-3 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-200 border border-gray-700 font-bold text-xs uppercase shadow-md flex items-center justify-center gap-1.5"
+              >
+                <RotateCw className="w-4 h-4" />
+                {siloRole === 'banco' ? 'CORRER BANCO (A LA DERECHA)' : 'TOMAR EL BANCO'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ==================================================== */}
         {/* GAME 1: DOMINÓ CUBANO (DOBLE 9)                      */}
