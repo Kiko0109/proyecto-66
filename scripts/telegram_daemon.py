@@ -148,12 +148,14 @@ CHARADA_CUBANA = {
     100: "Dios / El Inodoro (Tríada sagrada, Principio y Fin)"
 }
 
+WEB_APP_URL = "https://ais-pre-xnsllky7xyda54sjtze63s-122500213674.us-east1.run.app"
+
 # Teclado persistente inferior (Bottom Reply Keyboard)
 BOTTOM_KEYBOARD = {
     "keyboard": [
-        [{"text": "🏠 Menú Principal"}, {"text": "🎲 El Silo (3 Dados)"}],
-        [{"text": "🁣 Dominó Doble 9"}, {"text": "🔮 La Charada"}],
-        [{"text": "⚙️ Panel Admin Max"}, {"text": "💰 Mi Saldo P66"}]
+        [{"text": "🎮 Jugar en Web", "web_app": {"url": WEB_APP_URL}}, {"text": "🏠 Menú Principal"}],
+        [{"text": "🎲 El Silo (3 Dados)"}, {"text": "🁣 Dominó Doble 9"}],
+        [{"text": "🔮 La Charada"}, {"text": "⚙️ Panel Admin Max"}]
     ],
     "resize_keyboard": True,
     "persistent": True
@@ -162,6 +164,9 @@ BOTTOM_KEYBOARD = {
 # Teclado inline interactivo principal
 MAIN_INLINE_KEYBOARD = {
     "inline_keyboard": [
+        [
+            {"text": "🎮 ABRIR WEB DE JUEGOS EN TELEGRAM", "web_app": {"url": WEB_APP_URL}}
+        ],
         [
             {"text": "🎲 El Silo Cubano (3 Dados)", "callback_data": "btn_silo"},
             {"text": "🁣 Dominó Doble 9", "callback_data": "btn_domino"}
@@ -372,8 +377,9 @@ def jugar_silo_cubano(username, action="roll"):
     teclado = {
         "inline_keyboard": [
             [{"text": "🎲 Volver a Tirar Dados", "callback_data": "silo_roll"}],
+            [{"text": "🎮 Abrir Web de Juegos (Mini App)", "web_app": {"url": WEB_APP_URL}}],
+            [{"text": "💵 Apostar +100", "callback_data": "silo_bet_100"}, {"text": "💵 Apostar +500", "callback_data": "silo_bet_500"}],
             [{"text": "🔄 Pasar Banco a la Derecha", "callback_data": "silo_pass"}],
-            [{"text": "💵 Apostar +100 P66 a la Mesa", "callback_data": "silo_bet_100"}],
             [{"text": "🏠 Volver al Menú Principal", "callback_data": "btn_menu"}]
         ]
     }
@@ -486,6 +492,9 @@ def handle_callback_query(update):
     elif data == "silo_bet_100":
         SILO_STATE["table_pot"] += 100
         send_message(chat_id, f"💵 *¡Apuesta colocada!* Sumaste +100 P66 al bote de la mesa. Total en juego: *{SILO_STATE['table_pot']} P66*.")
+    elif data == "silo_bet_500":
+        SILO_STATE["table_pot"] += 500
+        send_message(chat_id, f"💵 *¡Apuesta colocada!* Sumaste +500 P66 al bote de la mesa. Total en juego: *{SILO_STATE['table_pot']} P66*.")
     elif data == "btn_domino":
         send_message(chat_id, (
             f"🁣 *MESA DE DOMINÓ CUBANO DOBLE 9 (55 FICHAS)*\n\n"
@@ -544,10 +553,70 @@ def handle_callback_query(update):
 # 5. MENSAJES DE TEXTO Y COMANDOS
 # ====================================================
 def procesar_texto(text, username, chat_id):
-    clean = text.strip()
+    # Limpiar menciones de grupo (@Yan0109bot)
+    clean = re.sub(r'@yan0109bot', '', text, flags=re.IGNORECASE).strip()
     lower = clean.lower()
 
-    # 1. Menú o Inicio
+    # 0. Abrir Web App de Juegos en Telegram
+    if lower in ["/juegos", "/web", "/app", "/jugar", "juegos", "web", "mini app", "🎮 jugar en web"]:
+        return (
+            f"🎮 *ECOSISTEMA DE JUEGOS EN TELEGRAM (MINI APP)*\n\n"
+            f"¡{username}, la mesa gráfica completa ya está activa dentro de Telegram!\n\n"
+            f"🎲 **El Silo Cubano:** Dados animados, rotación de banco y 10% de rake para la casa.\n"
+            f"🁣 **Dominó Cubano Doble 9:** Tablero interactivo con 55 fichas y capicúa 4x.\n"
+            f"🔮 **La Charada Cubana:** Los 100 números de la bolita con buscador.\n"
+            f"🪖 **Combate Militar Táctico:** Sistema realista de asalto y misiones.\n"
+            f"💰 **Billetera Soberana:** Apuestas con saldo P66 y USDT.\n\n"
+            f"Toca el botón dorado abajo para abrirla directamente:",
+            {
+                "inline_keyboard": [
+                    [{"text": "🚀 ABRIR JUEGOS EN TELEGRAM (MINI APP)", "web_app": {"url": WEB_APP_URL}}],
+                    [{"text": "🎲 Jugar El Silo por Texto", "callback_data": "btn_silo"}],
+                    [{"text": "🏠 Menú Principal", "callback_data": "btn_menu"}]
+                ]
+            }
+        )
+
+    # 1. Apuestas 100% Libres (Cualquier cantidad que el jugador desee apostar)
+    if lower.startswith("/apostar") or lower.startswith("apuesto") or (lower.startswith("/apuesta") and any(char.isdigit() for char in lower)):
+        nums = re.findall(r'\b\d+\b', clean)
+        if nums:
+            monto = int(nums[0])
+            if monto > 0:
+                SILO_STATE["table_pot"] += monto
+                return (
+                    f"💵 *¡APUESTA RECIBIDA EN LA MESA DE EL SILO!*\n\n"
+                    f"👤 *Apostador:* {username}\n"
+                    f"💰 *Cantidad Apostada:* +{monto:,} P66\n"
+                    f"🏆 *Bote Total en Mesa:* {SILO_STATE['table_pot']:,} P66\n"
+                    f"👑 *Banquero Defensor:* {SILO_STATE['current_banker']}\n\n"
+                    f"Aquí cada quien apuesta la cantidad libre que quiera sin límites fijos.\n"
+                    f"¿Quién más sube la parada con `/apostar <monto>` o el banco tira los 3 dados?",
+                    {
+                        "inline_keyboard": [
+                            [{"text": "🎲 ¡Tirar Dados el Banco!", "callback_data": "silo_roll"}],
+                            [{"text": "💵 Apostar +100", "callback_data": "silo_bet_100"}, {"text": "💵 Apostar +500", "callback_data": "silo_bet_500"}],
+                            [{"text": "🎮 Abrir Web de Juegos (Mini App)", "web_app": {"url": WEB_APP_URL}}],
+                            [{"text": "🔄 Pasar Banco a la Derecha", "callback_data": "silo_pass"}]
+                        ]
+                    }
+                )
+        return (
+            f"💡 *APUESTAS LIBRES EN EL SILO CUBANO*\n\n"
+            f"Para apostar la cantidad que tú quieras, escribe por ejemplo:\n"
+            f"👉 `/apostar 50`\n"
+            f"👉 `/apostar 250`\n"
+            f"👉 `/apostar 1000`\n\n"
+            f"El monto que pongas se sumará al bote de la mesa contra el banco.",
+            {
+                "inline_keyboard": [
+                    [{"text": "💵 Apostar +100", "callback_data": "silo_bet_100"}, {"text": "💵 Apostar +500", "callback_data": "silo_bet_500"}],
+                    [{"text": "🎲 Tirar los 3 Dados", "callback_data": "silo_roll"}]
+                ]
+            }
+        )
+
+    # 2. Menú o Inicio
     if lower.startswith("/start") or lower in ["hola", "menu", "menú", "🏠 menú principal"]:
         return (
             f"¡Hola Comandante {username}! Aquí está tu bot único **Yan**, configurado a tu medida.\n\n"
@@ -561,11 +630,11 @@ def procesar_texto(text, username, chat_id):
             MAIN_INLINE_KEYBOARD
         )
 
-    # 2. El Silo Cubano
+    # 3. El Silo Cubano
     if lower in ["/silo", "silo", "dados", "🎲 el silo (3 dados)", "el silo"]:
         return jugar_silo_cubano(username, "roll")
 
-    # 3. Dominó Cubano
+    # 4. Dominó Cubano
     if lower in ["/domino", "domino", "dominó", "🁣 dominó doble 9", "🁣 dominó cubano"]:
         return (
             f"🁣 *MESA DE DOMINÓ CUBANO DOBLE 9 (55 FICHAS)*\n\n"
@@ -582,7 +651,7 @@ def procesar_texto(text, username, chat_id):
             }
         )
 
-    # 4. La Charada Cubana
+    # 5. La Charada Cubana
     if lower.startswith("/charada") or "charada" in lower or "bolita" in lower or lower == "🔮 la charada":
         nums = re.findall(r'\b\d{1,3}\b', clean)
         if nums:
@@ -615,11 +684,11 @@ def procesar_texto(text, username, chat_id):
             }
         )
 
-    # 5. Panel Administrativo
+    # 6. Panel Administrativo
     if lower in ["/admin", "admin", "⚙️ panel admin max", "panel admin"]:
         return panel_administrativo_max()
 
-    # 6. Saldo
+    # 7. Saldo
     if lower in ["/saldo", "saldo", "💰 mi saldo p66"]:
         return (
             f"💰 *BILLETERA SOBERANA P66 ({username})*\n\n"
@@ -635,7 +704,7 @@ def procesar_texto(text, username, chat_id):
             }
         )
 
-    # 7. Apuestas Deportivas
+    # 8. Apuestas Deportivas
     if lower.startswith("/apuesta") or "apuesta" in lower:
         return (
             f"📊 *ANÁLISIS DEPORTIVO RIGUROSO*\n\n"
@@ -648,7 +717,7 @@ def procesar_texto(text, username, chat_id):
             MAIN_INLINE_KEYBOARD
         )
 
-    # 8. Respuesta conversacional cercana y directa
+    # 9. Respuesta conversacional cercana y directa
     return (
         f"Comandante {username}, te escucho alto y claro sobre: \"{clean}\".\n\n"
         f"Todo el control está en tus manos. Aquí tienes el panel interactivo listo:",
