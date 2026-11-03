@@ -101,7 +101,7 @@ Para comenzar con buen pie: ¿de qué te gustaría hablar hoy?`,
 
 🎲 **1. El Silo Cubano (3 Dados Callejeros):**
 • **¿Qué es El Banco?:** No es un banco de dinero ni del sistema; es la forma criolla de llamar al **jugador de la mesa que tira contra todos los demás apostadores**. Si no lo quiere, lo pasa al de la derecha por las manecillas del reloj.
-• **Apuestas:** Todos los demás jugadores apuestan una cantidad $X en la mesa contra el banco.
+• **Apuestas 100% Libres:** Cada jugador apuesta la cantidad exacta que quiera en la mesa contra el banco (sin topes ni límites fijos).
 • **Tirada del Banco (3 Dados):**
   - **¡SILO (4-5-6) o el 6!:** ¡El banco recoge toda la mesa! La Casa retiene el **10% de comisión (rake)** y el banquero cobra el resto.
   - **¡EL MAJÁ (1-2-3) o el 1!:** ¡El banco pierde! El banquero tiene que pagar obligatoriamente lo apostado en la mesa a todos los jugadores.
