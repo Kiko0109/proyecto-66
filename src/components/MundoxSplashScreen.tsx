@@ -17,44 +17,61 @@ export const MundoxSplashScreen: React.FC<MundoxSplashScreenProps> = ({
   const [soundMuted, setSoundMuted] = useState(false);
 
   useEffect(() => {
-    // Progressive Loading Simulation matching 0% -> 85% -> 100%
-    const interval = setInterval(() => {
+    let timer: NodeJS.Timeout;
+    let isPausedAt85 = false;
+
+    // Realistic cinematic loading simulation (total ~6.5s so the artwork and bar are fully enjoyed)
+    const runStep = () => {
       setProgress((prev) => {
         if (prev >= 100) {
-          clearInterval(interval);
           setIsReady(true);
           return 100;
         }
 
-        const increment = prev < 50 ? 5 : prev < 85 ? 3 : 2;
-        const nextVal = Math.min(100, prev + increment);
-
-        if (nextVal < 30) {
-          setStatusMessage('Cargando protocolos soberanos y Bóveda de Max (10% Rake)...');
-        } else if (nextVal < 60) {
-          setStatusMessage('Sincronizando El Silo Cubano (Alante y Atrás) & Dominó Doble 9...');
-        } else if (nextVal < 85) {
-          setStatusMessage('Inicializando Aventuras Épicas, Juego de Comando y Top 10 Esports...');
-        } else if (nextVal < 100) {
-          setStatusMessage('¡CARGANDO TU EXPERIENCIA ÉPICA...');
-        } else {
-          setStatusMessage('¡LISTO PARA LA BATALLA! MUNDOX ACTIVO');
+        // Pause deliberately at 85% to match the screenshot artwork
+        if (prev >= 84 && prev < 86 && !isPausedAt85) {
+          isPausedAt85 = true;
+          setStatusMessage('¡85% ALCANZADO: CARGANDO TU EXPERIENCIA ÉPICA...');
+          timer = setTimeout(() => {
+            setProgress(86);
+            runStep();
+          }, 1400);
+          return 85;
         }
 
-        return nextVal;
-      });
-    }, 70);
+        const next = prev + (prev < 30 ? 2 : prev < 70 ? 1 : prev < 85 ? 1 : prev < 95 ? 1 : 2);
+        const clamped = Math.min(100, next);
 
-    return () => clearInterval(interval);
+        if (clamped < 25) {
+          setStatusMessage('Iniciando protocolos de seguridad y Bóveda de Max (10% Rake)...');
+        } else if (clamped < 55) {
+          setStatusMessage('Sincronizando El Silo Cubano (Alante y Atrás) & Dominó Doble 9...');
+        } else if (clamped < 85) {
+          setStatusMessage('Inicializando Aventuras Épicas, Juego de Comando y Top 10 Esports...');
+        } else if (clamped < 100) {
+          setStatusMessage('CARGANDO TU EXPERIENCIA ÉPICA...');
+        } else {
+          setStatusMessage('¡MUNDOX GAMES HUB COMPLETADO AL 100%!');
+        }
+
+        const delay = clamped < 40 ? 75 : clamped < 85 ? 95 : 110;
+        timer = setTimeout(runStep, delay);
+        return clamped;
+      });
+    };
+
+    timer = setTimeout(runStep, 150);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  // Auto transition when progress reaches 100%
+  // Auto transition when progress reaches 100% (holds for 2.0s so user can admire)
   useEffect(() => {
     if (progress === 100) {
       if (!soundMuted) playCyberSound('approve');
       const timeout = setTimeout(() => {
         onComplete();
-      }, 1200);
+      }, 2000);
       return () => clearTimeout(timeout);
     }
   }, [progress, onComplete, soundMuted]);
