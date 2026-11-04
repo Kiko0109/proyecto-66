@@ -27,6 +27,7 @@ import { MarketAnalysisPanel } from './components/MarketAnalysisPanel';
 import { StudyAppView } from './components/StudyAppView';
 import { GamesAppView } from './components/GamesAppView';
 import { TelegramGamesHubView } from './components/TelegramGamesHubView';
+import { MundoxSplashScreen } from './components/MundoxSplashScreen';
 import { BotDossierModal } from './components/BotDossierModal';
 import { BotsOverviewModal } from './components/BotsOverviewModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -154,6 +155,9 @@ export default function App() {
     } catch {}
     return 'juegos';
   });
+
+  // MUNDOX Telegram Games Hub & APK Portada con Barra de Carga
+  const [showMundoxSplash, setShowMundoxSplash] = useState<boolean>(true);
 
   // Proposed Tasks with Approval Requirement (Rule 3 & 8)
   const [pendingTasks, setPendingTasks] = useState<ProposedTask[]>(() => {
@@ -655,7 +659,11 @@ export default function App() {
   };
 
   return (
-    <AndroidShell
+    <>
+      {showMundoxSplash && (
+        <MundoxSplashScreen onComplete={() => setShowMundoxSplash(false)} />
+      )}
+      <AndroidShell
       isFrameEnabled={settings.androidDeviceFrame}
       onToggleFrame={() =>
         setSettings((prev) => ({
@@ -760,7 +768,7 @@ export default function App() {
       {currentApp === 'estudio' ? (
         <StudyAppView />
       ) : currentApp === 'juegos' ? (
-        <TelegramGamesHubView />
+        <TelegramGamesHubView onOpenPortada={() => setShowMundoxSplash(true)} />
       ) : (
         /* APK A: PROYECTO 66 CONTROL */
         <>
@@ -986,5 +994,6 @@ export default function App() {
         onClose={() => setIsCryptoWalletOpen(false)}
       />
     </AndroidShell>
+    </>
   );
 }
