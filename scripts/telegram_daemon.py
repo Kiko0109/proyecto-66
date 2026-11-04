@@ -39,7 +39,7 @@ BASE_URL = f"https://api.telegram.org/bot{TOKEN}"
 ADMIN_CHAT_ID = 8885707506
 
 # URL Oficial de la Web App en Telegram (Telegram Games Hub)
-WEB_APP_URL = "https://ais-pre-xnsllky7xyda54sjtze63s-122500213674.us-east1.run.app"
+WEB_APP_URL = "https://ais-dev-xnsllky7xyda54sjtze63s-122500213674.us-east1.run.app"
 
 # Estado de la Bóveda Central de la Casa (Comandante Max)
 VAULT_STATE = {
