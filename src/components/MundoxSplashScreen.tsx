@@ -83,16 +83,21 @@ export const MundoxSplashScreen: React.FC<MundoxSplashScreenProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-black text-white select-none overflow-hidden font-sans">
-      {/* Background Graphic Asset: MUNDOX_portada_89727de9.png */}
-      <div className="absolute inset-0 z-0">
+      {/* Background Graphic Asset: MUNDOX_portada_89727de9.png (Full Uncropped View) */}
+      <div className="absolute inset-0 z-0 flex items-center justify-center bg-black overflow-hidden">
+        {/* Ambient backlight glow */}
         <img
           src="/assets/aistudio/MUNDOX_portada_89727de9.png"
-          alt="MUNDOX Telegram Games Hub Portada"
-          className="w-full h-full object-cover object-center filter brightness-95 contrast-105"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-40 scale-110 pointer-events-none"
         />
-        {/* Subtle cinematic gradient vignette overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/60 pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/20 to-black/80 pointer-events-none" />
+        {/* Full complete uncropped photo */}
+        <img
+          src="/assets/aistudio/MUNDOX_portada_89727de9.png"
+          alt="MUNDOX Telegram Games Hub Portada Completa"
+          className="relative z-1 max-w-full max-h-full object-contain filter brightness-100 contrast-105 shadow-[0_0_50px_rgba(0,0,0,0.9)]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none" />
       </div>
 
       {/* Top Floating Control Bar */}
