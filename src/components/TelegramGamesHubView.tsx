@@ -41,7 +41,11 @@ const LANGUAGE_LABELS: Record<Language, { label: string; flag: string }> = {
   pt: { label: 'Português', flag: '🇧🇷' }
 };
 
-export const TelegramGamesHubView: React.FC = () => {
+export interface TelegramGamesHubViewProps {
+  onOpenPortada?: () => void;
+}
+
+export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOpenPortada }) => {
   const [activeGame, setActiveGame] = useState<ActiveGameMode>('hub');
   const [language, setLanguage] = useState<Language>('es');
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -164,6 +168,9 @@ export const TelegramGamesHubView: React.FC = () => {
             </div>
             <div>
               <h1 className="text-base sm:text-lg font-black tracking-wide text-white flex items-center gap-1.5">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-red-400 to-cyan-400">
+                  MUNDOX
+                </span>{' '}
                 Telegram Games Hub
               </h1>
               <p className="text-[11px] font-medium text-cyan-300/80">
@@ -172,8 +179,24 @@ export const TelegramGamesHubView: React.FC = () => {
             </div>
           </div>
 
-          {/* Controls: Language, Login & 2FA badge */}
+          {/* Controls: Portada, Language, Login & 2FA badge */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Botón Ver Portada MUNDOX con Barra de Carga */}
+            {onOpenPortada && (
+              <button
+                onClick={() => {
+                  playCyberSound('click');
+                  onOpenPortada();
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-600/40 via-rose-600/40 to-cyan-500/40 hover:from-red-600/60 hover:to-cyan-500/60 border border-cyan-400/70 text-xs text-white font-mono font-bold transition shadow-[0_0_15px_rgba(0,240,255,0.4)]"
+                title="Ver Portada MUNDOX con Barra de Carga"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+                <span className="hidden sm:inline">Portada MUNDOX</span>
+                <span className="sm:hidden">Portada</span>
+              </button>
+            )}
+
             {/* Language Dropdown */}
             <div className="relative">
               <button
