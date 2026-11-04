@@ -22,6 +22,6 @@ Servidor Principal Oficial desplegado en **Hugging Face Spaces**.
 ### Despliegue en Telegram:
 1. En **@BotFather**, ejecuta `/newapp` para `@Yan0109bot`.
 2. Asigna la URL del Space o del Cloud Run:
-   - `https://ais-pre-xnsllky7xyda54sjtze63s-122500213674.us-east1.run.app`
+   - `https://ais-dev-xnsllky7xyda54sjtze63s-122500213674.us-east1.run.app`
    - O tu URL de Hugging Face: `https://<tu-usuario>-mundox.hf.space`
 3. ¡Listo! El botón de menú y el enlace `t.me/Yan0109bot/<short_name>` abrirán el juego completo en pantalla completa dentro de Telegram.
