@@ -22,17 +22,22 @@ import {
   Send,
   Radio,
   ExternalLink,
-  Info
+  Info,
+  Maximize2,
+  Eye,
+  Image as ImageIcon,
+  X
 } from 'lucide-react';
 import { playCyberSound } from '../utils/speechUtils';
 import { MmorpgAppView } from './MmorpgAppView';
 import { CasinoAppView } from './CasinoAppView';
 import { CallOfDutyAppView } from './CallOfDutyAppView';
 import { EsportsLeaderboardModal } from './EsportsLeaderboardModal';
+import { HubLanguage, HUB_TRANSLATIONS } from '../data/hubTranslations';
 
 type ActiveGameMode = 'hub' | 'rpg' | 'casino' | 'comando';
 
-type Language = 'es' | 'en' | 'ru' | 'pt' | 'de' | 'fr' | 'it' | 'tr';
+export type Language = HubLanguage;
 
 const LANGUAGE_LABELS: Record<Language, { label: string; flag: string }> = {
   es: { label: 'Español', flag: '🇪🇸' },
@@ -56,11 +61,15 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
   const [rulesAccepted, setRulesAccepted] = useState(true);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [selectedPhotoTab, setSelectedPhotoTab] = useState<'hub' | 'portada'>('hub');
   const [userEmail, setUserEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [twoFactorActive, setTwoFactorActive] = useState(true);
   const [showExpulsionWarning, setShowExpulsionWarning] = useState(false);
+
+  const t = HUB_TRANSLATIONS[language];
 
   // If a game is active, render that game with a persistent back-to-hub bar
   if (activeGame === 'rpg') {
@@ -74,10 +83,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
             }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 text-xs font-bold font-mono transition"
           >
-            ← Volver a Telegram Games Hub
+            ← {t.backToHub}
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-amber-400">⚔️ Aventuras Épicas (RPG al estilo WoW)</span>
+            <span className="text-xs font-bold text-amber-400">⚔️ {t.card1Title} ({t.card1Sub})</span>
           </div>
           <button
             onClick={() => setIsLeaderboardOpen(true)}
@@ -104,10 +113,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
             }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/50 text-xs font-bold font-mono transition"
           >
-            ← Volver a Telegram Games Hub
+            ← {t.backToHub}
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-purple-400">♠️ Casino Poker & El Silo Cubano</span>
+            <span className="text-xs font-bold text-purple-400">♠️ {t.card2Title} ({t.card2Sub})</span>
           </div>
           <button
             onClick={() => setIsLeaderboardOpen(true)}
@@ -134,10 +143,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
             }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/50 text-xs font-bold font-mono transition"
           >
-            ← Volver a Telegram Games Hub
+            ← {t.backToHub}
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-emerald-400">🪖 Juego de Comando (Estrategia y Acción)</span>
+            <span className="text-xs font-bold text-emerald-400">🪖 {t.card3Title} ({t.card3Sub})</span>
           </div>
           <button
             onClick={() => setIsLeaderboardOpen(true)}
@@ -156,14 +165,19 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
   // HUB VIEW (Matches 1793783954523_a63df036.jpg)
   return (
     <div className="min-h-screen bg-[#020612] text-white font-sans selection:bg-[#00f0ff]/30 relative overflow-x-hidden">
-      {/* Visual Backdrop Asset: 1793783954523_a63df036.jpg */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      {/* Visual Backdrop Asset: 1793783954523_a63df036.jpg with uncropped presentation */}
+      <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden">
+        <img
+          src="/assets/aistudio/1793783954523_a63df036.jpg"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-35 scale-105"
+        />
         <img
           src="/assets/aistudio/1793783954523_a63df036.jpg"
           alt="MUNDOX Telegram Games Hub"
-          className="w-full h-full object-cover object-top opacity-35 filter contrast-125"
+          className="w-full h-full object-cover object-top opacity-40 filter contrast-125"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#020612]/75 via-[#020612]/60 to-[#020612]/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020612]/80 via-[#020612]/60 to-[#020612]/95" />
       </div>
 
       {/* TOP HEADER BAR */}
@@ -184,12 +198,12 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 Telegram Games Hub
               </h1>
               <p className="text-[11px] font-medium text-cyan-300/80">
-                Juega • Disfruta • Gana
+                {t.tagline}
               </p>
             </div>
           </div>
 
-          {/* Controls: Portada, Language, Login & 2FA badge */}
+          {/* Controls: Portada, Foto Completa, Language, Login & 2FA badge */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Botón Ver Portada MUNDOX con Barra de Carga */}
             {onOpenPortada && (
@@ -199,13 +213,27 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                   onOpenPortada();
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-red-600/40 via-rose-600/40 to-cyan-500/40 hover:from-red-600/60 hover:to-cyan-500/60 border border-cyan-400/70 text-xs text-white font-mono font-bold transition shadow-[0_0_15px_rgba(0,240,255,0.4)]"
-                title="Ver Portada MUNDOX con Barra de Carga"
+                title={t.portadaBtn}
               >
                 <Sparkles className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
-                <span className="hidden sm:inline">Portada MUNDOX</span>
+                <span className="hidden sm:inline">{t.portadaBtn}</span>
                 <span className="sm:hidden">Portada</span>
               </button>
             )}
+
+            {/* Botón Ver Foto Completa (Sin Recortes) */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setIsPhotoModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/70 text-xs text-cyan-200 font-mono font-bold transition shadow-[0_0_15px_rgba(0,240,255,0.4)]"
+              title={t.fullPhotoBtn}
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-cyan-300" />
+              <span className="hidden sm:inline">{t.fullPhotoBtn}</span>
+              <span className="sm:hidden">Foto</span>
+            </button>
 
             {/* Language Dropdown (8 Idiomas) */}
             <div className="relative">
@@ -219,7 +247,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               </button>
 
               {isLangOpen && (
-                <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[#071733] border border-cyan-400/60 shadow-[0_0_20px_rgba(0,240,255,0.4)] py-1.5 z-50 animate-fadeIn max-h-64 overflow-y-auto">
+                <div className="absolute right-0 mt-2 w-44 rounded-xl bg-[#071733] border border-cyan-400/60 shadow-[0_0_20px_rgba(0,240,255,0.4)] py-1.5 z-50 animate-fadeIn max-h-72 overflow-y-auto">
                   {(['es', 'en', 'ru', 'pt', 'de', 'fr', 'it', 'tr'] as Language[]).map((lng) => (
                     <button
                       key={lng}
@@ -249,14 +277,14 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-xs font-bold text-white border border-blue-400/50 shadow-[0_0_12px_rgba(59,130,246,0.4)] transition"
             >
               <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Registro / Iniciar Sesión</span>
+              <span className="hidden sm:inline">{t.loginBtn}</span>
               <span className="sm:hidden">Cuenta</span>
             </button>
 
             {/* 2-Step Verification Badge */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#051829] border border-emerald-500/50 text-xs text-emerald-300 font-mono shadow-[0_0_10px_rgba(16,185,129,0.25)]">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Verificación de 2 Pasos</span>
+              <span className="hidden sm:inline">{t.twoFactor}</span>
               <span className="sm:hidden">2FA</span>
             </div>
           </div>
@@ -303,13 +331,13 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
           {/* Center: Welcome Text */}
           <div className="lg:col-span-6 text-center">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
-              Bienvenido a{' '}
+              {t.welcome}{' '}
               <span className="text-[#00f0ff] drop-shadow-[0_0_20px_rgba(0,240,255,0.9)]">
                 Telegram Games Hub
               </span>
             </h2>
             <p className="mt-2 text-sm sm:text-base text-cyan-100/90 font-medium tracking-wide">
-              Una sola plataforma, tres increíbles juegos
+              {t.platformThree}
             </p>
 
             <div className="mt-3 flex items-center justify-center gap-3">
@@ -321,7 +349,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 border border-cyan-400/60 text-xs font-mono font-bold text-[#00f0ff] shadow-[0_0_15px_rgba(0,240,255,0.3)] transition"
               >
                 <Trophy className="w-4 h-4 text-amber-400" />
-                <span>Ver Top 10 Clasificación Mundial</span>
+                <span>{t.top10Btn}</span>
                 <ArrowRight className="w-3 h-3" />
               </button>
             </div>
@@ -335,20 +363,20 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               </div>
               <div className="text-left">
                 <h3 className="text-xs font-bold text-white tracking-wide">
-                  Tu cuenta está segura
+                  {t.accountSecure}
                 </h3>
                 <ul className="mt-1.5 space-y-1 text-[11px] text-gray-200 font-sans">
                   <li className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span>Registro con Gmail</span>
+                    <span>{t.gmailReg}</span>
                   </li>
                   <li className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span>Verificación en 2 Pasos</span>
+                    <span>{t.twoFactorSec}</span>
                   </li>
                   <li className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span>Juego justo y sin trampas</span>
+                    <span>{t.fairPlay}</span>
                   </li>
                 </ul>
               </div>
@@ -370,10 +398,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-amber-300 tracking-wide">
-                    Aventuras Épicas
+                    {t.card1Title}
                   </h3>
                   <p className="text-xs font-semibold text-amber-200/80">
-                    RPG al estilo WoW
+                    {t.card1Sub}
                   </p>
                 </div>
               </div>
@@ -386,10 +414,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 <div className="relative text-center px-4">
                   <Crown className="w-12 h-12 text-amber-400 mx-auto drop-shadow-[0_0_12px_rgba(245,158,11,0.8)]" />
                   <span className="block mt-2 font-black text-sm text-white tracking-widest uppercase">
-                    Reino de Leyendas
+                    {t.card1Kingdom}
                   </span>
                   <span className="block text-[11px] text-amber-300 font-mono">
-                    24 Razas • Mazmorras • Jefes de Banda
+                    {t.card1Stats}
                   </span>
                 </div>
 
@@ -402,15 +430,15 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               <div className="mt-4 space-y-2 text-xs font-medium text-gray-200">
                 <div className="flex items-center gap-2">
                   <span className="text-base">👑</span>
-                  <span>Explora un mundo gigante</span>
+                  <span>{t.card1B1}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base">👥</span>
-                  <span>Forma tu equipo</span>
+                  <span>{t.card1B2}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base">🏆</span>
-                  <span>Completa misiones y gana</span>
+                  <span>{t.card1B3}</span>
                 </div>
               </div>
             </div>
@@ -425,12 +453,12 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-extrabold text-sm tracking-wide shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2 transition active:scale-95"
               >
                 <Play className="w-4 h-4 fill-white" />
-                <span>Jugar Ahora</span>
+                <span>{t.playNow}</span>
               </button>
             </div>
           </div>
 
-          {/* ================= CARD 2: CASINO POKER & EL SILO CUBANO ================= */}
+          {/* ================= CARD 2: CASINO MUNDOX & EL SILO CUBANO ================= */}
           <div className="relative rounded-3xl bg-gradient-to-b from-[#1b082a]/90 via-[#0d0416]/90 to-[#030205] border-2 border-purple-500/60 p-4 sm:p-5 flex flex-col justify-between shadow-[0_0_30px_rgba(168,85,247,0.25)] hover:shadow-[0_0_40px_rgba(168,85,247,0.4)] transition-all group">
             {/* Header: Casino Chip */}
             <div>
@@ -440,10 +468,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-purple-300 tracking-wide">
-                    Casino MUNDOX
+                    {t.card2Title}
                   </h3>
                   <p className="text-xs font-semibold text-purple-200/80">
-                    El casino en tus manos
+                    {t.card2Sub}
                   </p>
                 </div>
               </div>
@@ -458,10 +486,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                     <span className="p-1 rounded bg-white text-red-600 font-black text-xs">A♥</span>
                   </div>
                   <span className="block mt-2 font-black text-sm text-white tracking-widest uppercase">
-                    El Silo Cubano & Poker
+                    {t.card2Banner}
                   </span>
                   <span className="block text-[11px] text-purple-300 font-mono">
-                    3 Dados • Banco Rotativo • Cierre & Majá
+                    {t.card2Stats}
                   </span>
                 </div>
 
@@ -474,15 +502,15 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               <div className="mt-4 space-y-2 text-xs font-medium text-gray-200">
                 <div className="flex items-center gap-2">
                   <span className="text-base">♠️</span>
-                  <span>Juega al Poker / Silo Cubano</span>
+                  <span>{t.card2B1}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base">🎁</span>
-                  <span>Gana premios</span>
+                  <span>{t.card2B2}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base">🛡️</span>
-                  <span>Juego responsable</span>
+                  <span>{t.card2B3}</span>
                 </div>
               </div>
             </div>
@@ -497,7 +525,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-extrabold text-sm tracking-wide shadow-[0_0_20px_rgba(168,85,247,0.5)] flex items-center justify-center gap-2 transition active:scale-95"
               >
                 <Play className="w-4 h-4 fill-white" />
-                <span>Jugar Ahora</span>
+                <span>{t.playNow}</span>
               </button>
             </div>
           </div>
@@ -512,10 +540,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-emerald-300 tracking-wide">
-                    Juego de Comando
+                    {t.card3Title}
                   </h3>
                   <p className="text-xs font-semibold text-emerald-200/80">
-                    Estrategia y acción
+                    {t.card3Sub}
                   </p>
                 </div>
               </div>
@@ -527,10 +555,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 <div className="relative text-center px-4">
                   <Shield className="w-12 h-12 text-emerald-400 mx-auto drop-shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
                   <span className="block mt-2 font-black text-sm text-white tracking-widest uppercase">
-                    Call of Duty & Delta Force
+                    {t.card3Banner}
                   </span>
                   <span className="block text-[11px] text-emerald-300 font-mono">
-                    120 FPS • Asalto Táctico • Escuadrones
+                    {t.card3Stats}
                   </span>
                 </div>
 
@@ -543,15 +571,15 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               <div className="mt-4 space-y-2 text-xs font-medium text-gray-200">
                 <div className="flex items-center gap-2">
                   <span className="text-base">🎯</span>
-                  <span>Planifica tu estrategia</span>
+                  <span>{t.card3B1}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base">👥</span>
-                  <span>Comanda tu equipo</span>
+                  <span>{t.card3B2}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-base">🎖️</span>
-                  <span>Conquista territorios</span>
+                  <span>{t.card3B3}</span>
                 </div>
               </div>
             </div>
@@ -566,7 +594,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.5)] flex items-center justify-center gap-2 transition active:scale-95"
               >
                 <Play className="w-4 h-4 fill-white" />
-                <span>Jugar Ahora</span>
+                <span>{t.playNow}</span>
               </button>
             </div>
           </div>
@@ -581,7 +609,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
             <div>
               <div className="flex items-center gap-2 text-white font-extrabold text-base">
                 <Info className="w-5 h-5 text-[#00f0ff]" />
-                <span>¿Cómo empezar?</span>
+                <span>{t.howToStart}</span>
               </div>
 
               <div className="mt-4 space-y-2.5 text-xs text-cyan-100 font-medium">
@@ -589,44 +617,50 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                   <span className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-400 text-[#00f0ff] font-bold flex items-center justify-center text-xs shrink-0">
                     1
                   </span>
-                  <span>Elige tu idioma</span>
+                  <span>{t.step1}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-400 text-[#00f0ff] font-bold flex items-center justify-center text-xs shrink-0">
                     2
                   </span>
-                  <span>Lee y acepta las reglas</span>
+                  <span>{t.step2}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-400 text-[#00f0ff] font-bold flex items-center justify-center text-xs shrink-0">
                     3
                   </span>
-                  <span>Regístrate con tu Gmail</span>
+                  <span>{t.step3}</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="w-6 h-6 rounded-full bg-cyan-500/20 border border-cyan-400 text-[#00f0ff] font-bold flex items-center justify-center text-xs shrink-0">
                     4
                   </span>
-                  <span>Activa la verificación en 2 pasos</span>
+                  <span>{t.step4}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Container 2: Center Golden Trophy (4 cols) */}
-          <div className="md:col-span-4 p-5 rounded-3xl bg-gradient-to-b from-[#131102]/80 via-[#070601]/80 to-[#020201] border-2 border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.25)] flex flex-col items-center justify-center text-center">
+          <div
+            onClick={() => {
+              playCyberSound('click');
+              setIsLeaderboardOpen(true);
+            }}
+            className="md:col-span-4 p-5 rounded-3xl bg-gradient-to-b from-[#131102]/80 via-[#070601]/80 to-[#020201] border-2 border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.25)] flex flex-col items-center justify-center text-center cursor-pointer hover:border-amber-400 transition"
+          >
             <div className="relative">
               <Trophy className="w-16 h-16 text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.8)] animate-pulse" />
             </div>
             <h3 className="mt-3 text-lg font-black text-amber-300 tracking-wide uppercase">
-              Diversión Segura para Todos
+              {t.safeFun}
             </h3>
             {/* 5 Golden Stars */}
             <div className="mt-1 flex items-center justify-center gap-1 text-amber-400">
               {'★★★★★'}
             </div>
             <p className="mt-2 text-[11px] text-amber-200/80 font-mono">
-              Comunidad Libre de Trampas • Certificado Proyecto 66
+              {t.safeCommunity}
             </p>
           </div>
 
@@ -635,10 +669,10 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
             <div>
               <div className="flex items-center gap-2 text-white font-extrabold text-base">
                 <FileText className="w-5 h-5 text-amber-400" />
-                <span>Reglas del Juego</span>
+                <span>{t.rulesTitle}</span>
               </div>
               <p className="mt-1 text-xs text-gray-300">
-                Lee nuestras reglas antes de jugar.
+                {t.rulesSub}
               </p>
 
               {/* Consent Checkbox */}
@@ -650,7 +684,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                   className="w-4 h-4 rounded border-cyan-400 text-blue-600 focus:ring-0 cursor-pointer"
                 />
                 <span className={rulesAccepted ? 'font-bold text-white' : 'text-gray-400'}>
-                  Acepto las reglas y condiciones
+                  {t.acceptRules}
                 </span>
               </label>
             </div>
@@ -673,7 +707,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                     : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <span>Continuar</span>
+                <span>{t.continueBtn}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
 
@@ -684,12 +718,117 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 }}
                 className="w-full sm:w-auto px-3 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-[11px] font-bold text-rose-300 transition text-center"
               >
-                Si no aceptas, serás expulsado
+                {t.expulsionNotice}
               </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* FULL PHOTO / PORTADA COMPLETA MODAL (Sin Recortes) */}
+      {isPhotoModalOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-md animate-fadeIn">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/30 bg-[#030919]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
+                <ImageIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white font-mono flex items-center gap-2">
+                  <span>{t.photoModalTitle}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-400 text-[10px] text-cyan-300">
+                    100% Sin Recortes
+                  </span>
+                </h3>
+                <p className="text-[11px] text-gray-400 font-sans">{t.photoModalSub}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Tab switcher */}
+              <div className="flex items-center rounded-xl bg-black/60 p-1 border border-cyan-500/30 text-xs font-mono">
+                <button
+                  onClick={() => setSelectedPhotoTab('hub')}
+                  className={`px-3 py-1 rounded-lg transition ${
+                    selectedPhotoTab === 'hub' ? 'bg-cyan-500 text-black font-bold' : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  {t.tabHub}
+                </button>
+                <button
+                  onClick={() => setSelectedPhotoTab('portada')}
+                  className={`px-3 py-1 rounded-lg transition ${
+                    selectedPhotoTab === 'portada' ? 'bg-cyan-500 text-black font-bold' : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  {t.tabPortada}
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsPhotoModalOpen(false)}
+                className="p-2 rounded-xl bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white transition"
+                title={t.close}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Body: Complete Image with object-contain & backlight */}
+          <div className="flex-1 relative flex items-center justify-center p-2 sm:p-6 overflow-hidden bg-gradient-to-b from-[#020612] via-black to-[#050c1e]">
+            {/* Ambient glow */}
+            <img
+              src={selectedPhotoTab === 'hub' ? '/assets/aistudio/1793783954523_a63df036.jpg' : '/assets/aistudio/MUNDOX_portada_89727de9.png'}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-30 scale-110 pointer-events-none"
+            />
+            {/* 100% Uncropped high-definition photo */}
+            <img
+              src={selectedPhotoTab === 'hub' ? '/assets/aistudio/1793783954523_a63df036.jpg' : '/assets/aistudio/MUNDOX_portada_89727de9.png'}
+              alt="MUNDOX Oficial Full Artwork"
+              className="relative z-10 max-w-full max-h-[82vh] object-contain rounded-xl shadow-[0_0_60px_rgba(0,240,255,0.3)] border border-cyan-400/40 select-none"
+            />
+          </div>
+
+          {/* Modal Footer Controls */}
+          <div className="px-4 py-3 border-t border-cyan-500/30 bg-[#030919] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div className="text-gray-400 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>Resolución Oficial Proyecto 66 • MUNDOX Telegram Games Hub</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {onOpenPortada && (
+                <button
+                  onClick={() => {
+                    setIsPhotoModalOpen(false);
+                    onOpenPortada();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold transition hover:brightness-110"
+                >
+                  {t.portadaBtn} (85%)
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setIsPhotoModalOpen(false);
+                  setActiveGame('casino');
+                }}
+                className="px-3 py-1.5 rounded-xl bg-purple-600 text-white font-bold transition hover:bg-purple-500"
+              >
+                ♠️ {t.card2Title}
+              </button>
+              <button
+                onClick={() => setIsPhotoModalOpen(false)}
+                className="px-4 py-1.5 rounded-xl bg-cyan-500 text-black font-extrabold transition hover:bg-cyan-400"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* EXPULSION / DISCIPLINE WARNING MODAL */}
       {showExpulsionWarning && (
