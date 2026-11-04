@@ -32,13 +32,17 @@ import { EsportsLeaderboardModal } from './EsportsLeaderboardModal';
 
 type ActiveGameMode = 'hub' | 'rpg' | 'casino' | 'comando';
 
-type Language = 'es' | 'en' | 'ru' | 'pt';
+type Language = 'es' | 'en' | 'ru' | 'pt' | 'de' | 'fr' | 'it' | 'tr';
 
 const LANGUAGE_LABELS: Record<Language, { label: string; flag: string }> = {
   es: { label: 'Español', flag: '🇪🇸' },
   en: { label: 'English', flag: '🇬🇧' },
   ru: { label: 'Русский', flag: '🇷🇺' },
-  pt: { label: 'Português', flag: '🇧🇷' }
+  pt: { label: 'Português', flag: '🇧🇷' },
+  de: { label: 'Deutsch', flag: '🇩🇪' },
+  fr: { label: 'Français', flag: '🇫🇷' },
+  it: { label: 'Italiano', flag: '🇮🇹' },
+  tr: { label: 'Türkçe', flag: '🇹🇷' }
 };
 
 export interface TelegramGamesHubViewProps {
@@ -149,12 +153,18 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
     );
   }
 
-  // HUB VIEW (Matches file_0000000069ec81fbb6c985ca0a49a1e8_d3a3a1a3.png)
+  // HUB VIEW (Matches 1793783954523_a63df036.jpg)
   return (
     <div className="min-h-screen bg-[#020612] text-white font-sans selection:bg-[#00f0ff]/30 relative overflow-x-hidden">
-      {/* Background Cyber Grid & Nebula */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,140,255,0.25),rgba(255,255,255,0))] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#081b36_1px,transparent_1px),linear-gradient(to_bottom,#081b36_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
+      {/* Visual Backdrop Asset: 1793783954523_a63df036.jpg */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <img
+          src="/assets/aistudio/1793783954523_a63df036.jpg"
+          alt="MUNDOX Telegram Games Hub"
+          className="w-full h-full object-cover object-top opacity-35 filter contrast-125"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020612]/75 via-[#020612]/60 to-[#020612]/90" />
+      </div>
 
       {/* TOP HEADER BAR */}
       <header className="relative z-30 border-b border-[#00f0ff]/20 bg-[#030919]/90 backdrop-blur-md px-3 sm:px-6 py-2.5">
@@ -197,7 +207,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               </button>
             )}
 
-            {/* Language Dropdown */}
+            {/* Language Dropdown (8 Idiomas) */}
             <div className="relative">
               <button
                 onClick={() => setIsLangOpen(!isLangOpen)}
@@ -209,8 +219,8 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               </button>
 
               {isLangOpen && (
-                <div className="absolute right-0 mt-2 w-36 rounded-xl bg-[#071733] border border-cyan-400/60 shadow-[0_0_20px_rgba(0,240,255,0.4)] py-1.5 z-50 animate-fadeIn">
-                  {(['es', 'en', 'ru', 'pt'] as Language[]).map((lng) => (
+                <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[#071733] border border-cyan-400/60 shadow-[0_0_20px_rgba(0,240,255,0.4)] py-1.5 z-50 animate-fadeIn max-h-64 overflow-y-auto">
+                  {(['es', 'en', 'ru', 'pt', 'de', 'fr', 'it', 'tr'] as Language[]).map((lng) => (
                     <button
                       key={lng}
                       onClick={() => {
@@ -430,7 +440,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-purple-300 tracking-wide">
-                    Casino Poker
+                    Casino MUNDOX
                   </h3>
                   <p className="text-xs font-semibold text-purple-200/80">
                     El casino en tus manos
