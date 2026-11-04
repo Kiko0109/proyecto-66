@@ -62,7 +62,7 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
-  const [selectedPhotoTab, setSelectedPhotoTab] = useState<'hub' | 'portada'>('hub');
+  const [selectedPhotoTab, setSelectedPhotoTab] = useState<'hub' | 'portada' | 'botfather'>('botfather');
   const [userEmail, setUserEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(true);
@@ -749,6 +749,14 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               {/* Tab switcher */}
               <div className="flex items-center rounded-xl bg-black/60 p-1 border border-cyan-500/30 text-xs font-mono">
                 <button
+                  onClick={() => setSelectedPhotoTab('botfather')}
+                  className={`px-3 py-1 rounded-lg transition ${
+                    selectedPhotoTab === 'botfather' ? 'bg-emerald-500 text-black font-bold' : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  BotFather (640x360)
+                </button>
+                <button
                   onClick={() => setSelectedPhotoTab('hub')}
                   className={`px-3 py-1 rounded-lg transition ${
                     selectedPhotoTab === 'hub' ? 'bg-cyan-500 text-black font-bold' : 'text-gray-300 hover:text-white'
@@ -777,19 +785,37 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
           </div>
 
           {/* Modal Body: Complete Image with object-contain & backlight */}
-          <div className="flex-1 relative flex items-center justify-center p-2 sm:p-6 overflow-hidden bg-gradient-to-b from-[#020612] via-black to-[#050c1e]">
+          <div className="flex-1 relative flex flex-col items-center justify-center p-2 sm:p-6 overflow-hidden bg-gradient-to-b from-[#020612] via-black to-[#050c1e]">
             {/* Ambient glow */}
             <img
-              src={selectedPhotoTab === 'hub' ? '/assets/aistudio/1793783954523_a63df036.jpg' : '/assets/aistudio/MUNDOX_portada_89727de9.png'}
+              src={
+                selectedPhotoTab === 'botfather'
+                  ? '/assets/aistudio/mundox_botfather_640x360.jpg'
+                  : selectedPhotoTab === 'portada'
+                  ? '/assets/aistudio/MUNDOX_portada_89727de9.png'
+                  : '/assets/aistudio/1793783954523_a63df036.jpg'
+              }
               alt=""
               className="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-30 scale-110 pointer-events-none"
             />
             {/* 100% Uncropped high-definition photo */}
             <img
-              src={selectedPhotoTab === 'hub' ? '/assets/aistudio/1793783954523_a63df036.jpg' : '/assets/aistudio/MUNDOX_portada_89727de9.png'}
+              src={
+                selectedPhotoTab === 'botfather'
+                  ? '/assets/aistudio/mundox_botfather_640x360.jpg'
+                  : selectedPhotoTab === 'portada'
+                  ? '/assets/aistudio/MUNDOX_portada_89727de9.png'
+                  : '/assets/aistudio/1793783954523_a63df036.jpg'
+              }
               alt="MUNDOX Oficial Full Artwork"
-              className="relative z-10 max-w-full max-h-[82vh] object-contain rounded-xl shadow-[0_0_60px_rgba(0,240,255,0.3)] border border-cyan-400/40 select-none"
+              className="relative z-10 max-w-full max-h-[78vh] object-contain rounded-xl shadow-[0_0_60px_rgba(0,240,255,0.3)] border border-cyan-400/40 select-none"
             />
+
+            {selectedPhotoTab === 'botfather' && (
+              <div className="relative z-10 mt-3 px-3 py-1 rounded-full bg-emerald-950/90 border border-emerald-400 text-[11px] font-mono text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center gap-2">
+                <span>✓ Dimensiones Exactas: 640x360 píxeles para @BotFather</span>
+              </div>
+            )}
           </div>
 
           {/* Modal Footer Controls */}
@@ -799,6 +825,14 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
               <span>Resolución Oficial Proyecto 66 • MUNDOX Telegram Games Hub</span>
             </div>
             <div className="flex items-center gap-2">
+              <a
+                href="/assets/aistudio/mundox_botfather_640x360.jpg"
+                download="mundox_640x360.jpg"
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+              >
+                <span>💾 Descargar 640x360</span>
+              </a>
+
               {onOpenPortada && (
                 <button
                   onClick={() => {
