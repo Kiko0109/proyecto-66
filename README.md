@@ -1,36 +1,27 @@
-# ⚡ Proyecto 66 - Red de Nubes y Colmena de Servidores 24/7
-
-Sistema distribuido para **Kiko0109** con los **7 Bots Tácticos** (Yan, Kiko, Max, Buky, Gregoria, Yanet, Kuko), diseñado para operar 24/7 en la nube **sin consumir batería ni datos en tu teléfono móvil Android**.
-
+---
+title: Proyecto 66 MUNDOX Games Hub
+emoji: ⚡
+colorFrom: red
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
 ---
 
-## 🛡️ Principios Maestros de la Red:
-1. **Soberanía Absoluta del Comandante:** Ningún bot opera ni analiza en mercado sin tu orden expresa (`COMMANDER_STATUS = STANDBY`). Empiezan solo cuando tú dices *"Empiecen a estudiar y operar"*, y paran inmediatamente cuando dices *"Paren de estudiar"*.
-2. **0% Batería y Sin Bloqueo de Cuba:** El código corre en servidores de **Render** (AWS Oregón/Frankfurt) y **GitHub Actions** (Azure Virginia). Las peticiones a APIs financieras y brokers salen desde EE.UU./Europa, evitando los bloqueos de IP en Cuba.
-3. **Persistencia y Anti-Sleep Inteligente (Ahorro de los 750h/mes de Render):**
-   - Cuando Render entra en reposo después de 15 min sin visitas, el script `auto_sync_state.py` guarda automáticamente el estado (`cloud_state.json`) en este repositorio de GitHub.
-   - Cuando Render despierta, descarga el último estado y lo restaura sin perder ningún dato.
-   - Si conectas 2 cuentas gratuitas de Render (la tuya y la de un amigo/socio), tienes **1,500 horas gratis al mes** (un mes tiene 720h), garantizando cobertura 24/7 ininterrumpida sin gastar un centavo.
-4. **Auto-Corrección y Aprendizaje de Errores:**
-   - Si una predicción de otra APK o fuente externa falla, el motor la analiza, detecta el error en los indicadores y aprende para regalarte la corrección optimizada.
-   - En caso de fallo en el código, el sistema reescribe el estado y se auto-repara.
+# Proyecto 66 • MUNDOX Telegram Games Hub
+Servidor Principal Oficial desplegado en **Hugging Face Spaces**.
 
----
+### Características:
+- **Telegram Games Hub:** Portal de juegos en Telegram Mini App.
+- **El Silo Cubano 100% Legal:** 3 dados tradicionales, apuestas de Alante (Alta) y Atrás (Baja), 60 segundos por tiro, empate nulo y 10% de rake para la Bóveda de Max.
+- **Aventuras Épicas:** MMORPG al estilo WoW con 24 razas y mazmorras.
+- **Juego de Comando:** Call of Duty / Delta Force táctico.
+- **Multilenguaje (8 Idiomas):** Español, English, Русский, Português, Deutsch, Français, Italiano y Türkçe.
+- **Compatibilidad Total:** Sin bloqueos para Cuba y persistencia de sesión con o sin VPN.
 
-## 🤖 El Equipo de los 7 Bots:
-* 🔹 **Yan (CORE-01):** Coordinador central, visión holística y asignación de misiones.
-* 💻 **Kiko (DEV-02):** Programación, arquitectura limpia, APKs Android y ciberseguridad.
-* 🎯 **Max (TAC-03):** Estrategia táctica, trading intradía (<4h), Stop Loss y lotes (0.001 - 1.00).
-* 🎨 **Buky (ART-04):** Estética cyberpunk, arte visual, gráficos, fotos y vídeo.
-* 🧭 **Gregoria (SAGE-05):** Auditoría estricta de riesgos, ciencia y filosofía estoica.
-* 💬 **Yanet (VOX-06):** Comunicación asertiva, traducción, idiomas, audios y memoria RAG.
-* 🎮 **Kuko (FUN-07):** Gamificación, dinámicas de juegos interactivos, acertijos y humor.
-
----
-
-## 🚀 Despliegue en Render (1 Clic Gratis):
-1. Inicia sesión en **[render.com](https://render.com/)** con tu cuenta de GitHub.
-2. Crea un **New > Web Service**.
-3. Selecciona este repositorio: `Kiko0109/proyecto-66`.
-4. Render detectará automáticamente el archivo `Procfile` y `requirements.txt`.
-5. ¡Listo! Tu nodo web en la nube queda activo 24/7 con dirección propia `.onrender.com`.
+### Despliegue en Telegram:
+1. En **@BotFather**, ejecuta `/newapp` para `@Yan0109bot`.
+2. Asigna la URL del Space o del Cloud Run:
+   - `https://ais-pre-xnsllky7xyda54sjtze63s-122500213674.us-east1.run.app`
+   - O tu URL de Hugging Face: `https://<tu-usuario>-mundox.hf.space`
+3. ¡Listo! El botón de menú y el enlace `t.me/Yan0109bot/<short_name>` abrirán el juego completo en pantalla completa dentro de Telegram.
