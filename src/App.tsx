@@ -27,6 +27,7 @@ import { MarketAnalysisPanel } from './components/MarketAnalysisPanel';
 import { StudyAppView } from './components/StudyAppView';
 import { GamesAppView } from './components/GamesAppView';
 import { TelegramGamesHubView } from './components/TelegramGamesHubView';
+import { DeadLanAppView } from './components/DeadLanAppView';
 import { MundoxSplashScreen } from './components/MundoxSplashScreen';
 import { BotDossierModal } from './components/BotDossierModal';
 import { BotsOverviewModal } from './components/BotsOverviewModal';
@@ -145,15 +146,16 @@ export default function App() {
     }
   });
 
-  // App Navigation (Games Hub by default, switchable to Control 66)
+  // App Navigation (DEAD LAN by default, switchable to Games Hub or Control 66)
   const [currentApp, setCurrentApp] = useState<AppMode>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const appParam = params.get('app');
       if (appParam === 'control') return 'control';
       if (appParam === 'juegos' || appParam === 'games') return 'juegos';
+      if (appParam === 'deadlan' || appParam === 'zombie') return 'deadlan';
     } catch {}
-    return 'juegos';
+    return 'deadlan';
   });
 
   // MUNDOX Telegram Games Hub & APK Portada con Barra de Carga
@@ -660,7 +662,7 @@ export default function App() {
 
   return (
     <>
-      {showMundoxSplash && (
+      {showMundoxSplash && currentApp === 'juegos' && (
         <MundoxSplashScreen onComplete={() => setShowMundoxSplash(false)} />
       )}
       <AndroidShell
@@ -765,7 +767,9 @@ export default function App() {
       />
 
       {/* APPLICATION BODY BY SELECTED MODE */}
-      {currentApp === 'estudio' ? (
+      {currentApp === 'deadlan' ? (
+        <DeadLanAppView />
+      ) : currentApp === 'estudio' ? (
         <StudyAppView />
       ) : currentApp === 'juegos' ? (
         <TelegramGamesHubView onOpenPortada={() => setShowMundoxSplash(true)} />
