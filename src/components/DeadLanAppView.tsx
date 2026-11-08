@@ -213,13 +213,33 @@ export const DeadLanAppView: React.FC = () => {
   const [factionThreats, setFactionThreats] = useState<Array<{
     id: string;
     faction: string;
-    type: 'asedio' | 'complot' | 'saqueo';
+    type: 'asedio' | 'complot' | 'saqueo' | 'ataque_directo' | 'espionaje_asesinato';
     title: string;
     description: string;
     demands: string;
     reward: string;
     status: 'pendiente' | 'repelido' | 'aliado' | 'pagado' | 'evadido';
   }>>([
+    {
+      id: 'f-4',
+      faction: 'Milicia Esclavista de Élite (Columna Pesada)',
+      type: 'ataque_directo',
+      title: '¡ATAQUE DIRECTO EN CURSO! Invasión Blindada y Fuego Masivo',
+      description: '¡Sin peticiones ni treguas! 16 soldados de la Milicia en 2 camionetas blindadas con ametralladoras Browning pesadas embisten la valla este disparando ráfagas continuas hacia los barracones de tus subordinados.',
+      demands: 'Destrucción total del campamento y captura de prisioneros',
+      reward: 'Botín supremo: +40 balas, +35 chatarra y 1 camión artillado',
+      status: 'pendiente'
+    },
+    {
+      id: 'f-5',
+      faction: 'Los Susurradores (Asesinos Furtivos)',
+      type: 'espionaje_asesinato',
+      title: 'Espías Infiltrados: Intento de Degollar al Comandante',
+      description: 'Dos espías enemigos se cubrieron con harapos de mendigo fingiendo ser refugiados que escaparon de la celda C-10. Tus centinelas sospechan: llevan cuchillos de cerámica ocultos y buscan tu camastro para degollarte.',
+      demands: 'Eliminación del líder y usurpar la frecuencia LAN',
+      reward: '2 Cuchillos tácticos y mapa secreto de las bases de la Milicia',
+      status: 'pendiente'
+    },
     {
       id: 'f-1',
       faction: 'Milicia Esclavista de Élite',
@@ -461,27 +481,13 @@ export const DeadLanAppView: React.FC = () => {
             }}
           />
 
-          {/* Soft Edge Gradient - Center stays completely clean and visible */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#02050c]/95 via-transparent to-black/40 pointer-events-none" />
+          {/* Soft Edge Gradient - Center and top stay completely clean and visible */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#02050c]/95 via-transparent to-black/20 pointer-events-none" />
 
           {/* Foco de Torre de Vigilancia oscilando */}
           <div className="absolute -top-10 right-1/4 w-96 h-96 bg-amber-400/5 rounded-full blur-3xl transform rotate-45 animate-pulse pointer-events-none" />
 
-          {/* Top Bar Header para Móvil */}
-          <div className="relative z-10 px-4 sm:px-6 pt-5 flex items-center justify-between">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-950/80 border border-red-500/50 backdrop-blur-md shadow-[0_0_15px_rgba(239,68,68,0.4)]">
-              <Skull className="w-4 h-4 text-red-400 animate-pulse" />
-              <span className="text-[10px] sm:text-[11px] font-mono font-bold text-red-200 tracking-widest uppercase">
-                DEAD LAN • VULKAN MOBILE
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[11px] font-mono text-gray-300 bg-black/70 px-3 py-1.5 rounded-xl border border-gray-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>LAN P2P OFFLINE</span>
-            </div>
-          </div>
-
-          {/* Espacio Central Completamente Libre para que la Portada y el Arte se vean al 100% */}
+          {/* Espacio Superior y Central Completamente Limpio (Sin insignias ni textos sobre el arte) */}
           <div className="flex-1" />
 
           {/* Bottom Loading Bar Container para Móvil */}
@@ -2631,6 +2637,100 @@ PASO A PASO PARA COMPILAR DEAD LAN EN APK PARA TU MÓVIL ANDROID
                             >
                               <Target className="w-3.5 h-3.5" />
                               <span>Emboscada de Centinelas</span>
+                            </button>
+                          </>
+                        )}
+
+                        {threat.type === 'ataque_directo' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                playCyberSound('reject');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  ammo: Math.max(0, campData.ammo - 15),
+                                  scrap: campData.scrap + 35
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '💥 ¡INVASIÓN MASIVA REPELIDA! El fuego cruzado destruyó las camionetas enemigas. Capturado camión artillado (+35 Chatarra).',
+                                  ...prev
+                                ]);
+                                showTacticalToast('¡ATAQUE DIRECTO REPELIDO!', 'Milicia en retirada tras perder 12 soldados y 2 vehículos blindados.', 'success');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95 text-[11px]"
+                            >
+                              <Sword className="w-3.5 h-3.5" />
+                              <span>Fuego Cruzado: Repeler Asalto (-15 Balas)</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  ammo: Math.max(0, campData.ammo - 5),
+                                  scrap: campData.scrap + 20
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '💣 Viktor detonó las minas perimetrales de fósforo. La primera camioneta blindada voló por los aires.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('MINAS ACCIONADAS', 'Vanguardia blindada enemiga incinerada al tocar la alambrada.', 'success');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition flex items-center justify-center gap-1.5 active:scale-95 text-[11px]"
+                            >
+                              <Zap className="w-3.5 h-3.5" />
+                              <span>Detonar Minas de Alambre</span>
+                            </button>
+                          </>
+                        )}
+
+                        {threat.type === 'espionaje_asesinato' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  ammo: campData.ammo + 15
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '🔍 Vance interceptó a los dos espías falsos refugiados antes de llegar a la tienda del líder. Cuchillos decomisados.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('ESPÍAS DESENMASCARADOS', 'Vance evitó el asesinato en silencio (+15 Munición recuperada).', 'success');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95 text-[11px]"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Interrogar y Neutralizar con Vance</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampRadioLogs((prev) => [
+                                  '⛓️ Espías encadenados en fosa común. Revelaron las coordenadas del búnker principal de Los Susurradores.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('INFORMACIÓN OBTENIDA', 'Espías capturados revelan bases de las otras 23 facciones.', 'info');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-gray-200 border border-gray-700 font-bold transition flex items-center justify-center gap-1.5 active:scale-95 text-[11px]"
+                            >
+                              <Lock className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Encadenar y Extraer Inteligencia</span>
                             </button>
                           </>
                         )}
