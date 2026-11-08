@@ -39,11 +39,13 @@ import {
   Copy,
   Check,
   Terminal,
-  PlayCircle
+  PlayCircle,
+  Tent,
+  MapPin
 } from 'lucide-react';
 import { playCyberSound } from '../utils/speechUtils';
 
-type DeadLanViewMode = 'splash' | 'lobby' | 'character' | 'hierarchy' | 'bestiary' | 'weather' | 'mission' | 'apk_export';
+type DeadLanViewMode = 'splash' | 'lobby' | 'character' | 'hierarchy' | 'bestiary' | 'weather' | 'mission' | 'camp' | 'apk_export';
 
 type SeasonType = 'otoño' | 'invierno' | 'verano' | 'primavera';
 type WeatherCondition = 'lluvia_torrencial' | 'tormenta_electrica' | 'ventisca_nieve' | 'ola_calor' | 'niebla_acida';
@@ -193,6 +195,68 @@ export const DeadLanAppView: React.FC = () => {
   // Godot Export Code Viewer State
   const [selectedApkFile, setSelectedApkFile] = useState<'project_godot' | 'network_manager' | 'android_manifest' | 'quick_start'>('project_godot');
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
+
+  // Primer Campamento Refugio y Sistema de Asedios de las 25 Facciones
+  const [campData, setCampData] = useState({
+    name: 'Refugio Alfa: Bosque Negro',
+    location: 'Bosque de Niebla y Pinos (Sector B-4)',
+    fortificationLevel: 2,
+    food: 80,
+    water: 95,
+    ammo: 40,
+    scrap: 55,
+    guardsAssigned: 12,
+    smokeVisibility: 20, // % de humo visible
+    stealthActive: false, // Apagar fogatas para no ser detectado
+  });
+
+  const [factionThreats, setFactionThreats] = useState<Array<{
+    id: string;
+    faction: string;
+    type: 'asedio' | 'complot' | 'saqueo';
+    title: string;
+    description: string;
+    demands: string;
+    reward: string;
+    status: 'pendiente' | 'repelido' | 'aliado' | 'pagado' | 'evadido';
+  }>>([
+    {
+      id: 'f-1',
+      faction: 'Milicia Esclavista de Élite',
+      type: 'asedio',
+      title: 'Ultimátum de Asedio por Humo de Fogatas',
+      description: 'Han localizado las fogatas de tu campamento en el Sector B-4. Exigen 35 raciones de comida y que entregues a tu ingeniero Viktor antes del amanecer, o enviarán dos camionetas artilladas con ametralladoras pesadas a saquear vuestras tiendas.',
+      demands: '35 raciones de comida',
+      reward: 'Botín militar: +25 municiones y 1 camioneta blindada si los repeles',
+      status: 'pendiente'
+    },
+    {
+      id: 'f-2',
+      faction: 'Los Conquistadores (Veteranos)',
+      type: 'complot',
+      title: 'Petición de Ataque Conjunto a Convoy Enemigo',
+      description: 'Los Conquistadores te contactan por radio de onda corta: te piden enviar a tus soldados a emboscar el convoy de suministros de la Milicia en el puente roto. Si aceptas, compartirán el arsenal capturado.',
+      demands: 'Apoyo táctico de 8 soldados en la emboscada',
+      reward: '+50 cartuchos de escopeta, +30 botiquines y alianza militar',
+      status: 'pendiente'
+    },
+    {
+      id: 'f-3',
+      faction: 'Los Desolladores Salvajes',
+      type: 'saqueo',
+      title: 'Infiltración Nocturna para Saquear Almacén',
+      description: 'Tus centinelas escuchan ruidos en la alambrada sur. Una partida de 6 saqueadores con antorchas y ganzúas intenta forzar la bodega de agua y víveres del campamento.',
+      demands: 'Intentan robar 30 de comida y 20 de agua',
+      reward: 'Chatarra +30 y 2 prisioneros para interrogatorio',
+      status: 'pendiente'
+    }
+  ]);
+
+  const [campRadioLogs, setCampRadioLogs] = useState<string[]>([
+    'Campamento Alfa establecido con éxito tras la fuga de la prisión C-9.',
+    '⚠️ Facciones en alerta: Tu firma de humo ha sido captada por la Milicia y Los Desolladores.',
+    'Capitán Viktor reforzó la puerta principal con vigas de roble y alambre de espino.'
+  ]);
 
   // Weather definition database
   const WEATHER_PRESETS: Record<WeatherCondition, {
@@ -397,12 +461,11 @@ export const DeadLanAppView: React.FC = () => {
             }}
           />
 
-          {/* Gritty Dark Vignette and Spotlight Effect */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#02050c] via-black/55 to-black/85" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_20%,rgba(0,0,0,0.85)_100%)]" />
+          {/* Soft Edge Gradient - Center stays completely clean and visible */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#02050c]/95 via-transparent to-black/40 pointer-events-none" />
 
           {/* Foco de Torre de Vigilancia oscilando */}
-          <div className="absolute -top-10 right-1/4 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl transform rotate-45 animate-pulse" />
+          <div className="absolute -top-10 right-1/4 w-96 h-96 bg-amber-400/5 rounded-full blur-3xl transform rotate-45 animate-pulse pointer-events-none" />
 
           {/* Top Bar Header para Móvil */}
           <div className="relative z-10 px-4 sm:px-6 pt-5 flex items-center justify-between">
@@ -418,19 +481,8 @@ export const DeadLanAppView: React.FC = () => {
             </div>
           </div>
 
-          {/* Center Title Content */}
-          <div className="relative z-10 text-center px-4 max-w-2xl mx-auto space-y-2.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-mono text-[11px] font-bold uppercase tracking-widest">
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              <span>10,000 km² • Clima Dinámico • IA Mutante</span>
-            </div>
-            <h1 className="text-4xl sm:text-6xl font-black font-mono tracking-wider text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-500 drop-shadow-[0_4px_25px_rgba(255,255,255,0.3)]">
-              DEAD LAN
-            </h1>
-            <p className="text-xs sm:text-sm font-mono text-gray-300 tracking-widest uppercase">
-              La Gran Fuga • Criaturas B.O.W. • Cooperativo en Red Local
-            </p>
-          </div>
+          {/* Espacio Central Completamente Libre para que la Portada y el Arte se vean al 100% */}
+          <div className="flex-1" />
 
           {/* Bottom Loading Bar Container para Móvil */}
           <div className="relative z-10 p-5 sm:p-6 max-w-xl mx-auto w-full space-y-3">
@@ -583,6 +635,22 @@ export const DeadLanAppView: React.FC = () => {
             >
               <Crosshair className="w-3.5 h-3.5 text-emerald-300" />
               <span>Misión: Fuga C-9</span>
+            </button>
+
+            {/* Primer Campamento Refugio & Sistema de Asedios de las 25 Facciones */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setViewMode('camp');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                viewMode === 'camp'
+                  ? 'bg-amber-600 text-white font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                  : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <Tent className="w-3.5 h-3.5 text-amber-300" />
+              <span>Campamento & Asedios</span>
             </button>
 
             {/* Generador y Exportador de APK para Android */}
@@ -1734,6 +1802,17 @@ export const DeadLanAppView: React.FC = () => {
                   </p>
                   <div className="flex flex-wrap justify-center gap-2 pt-1 font-mono text-xs">
                     <button
+                      onClick={() => {
+                        playCyberSound('approve');
+                        setViewMode('camp');
+                        showTacticalToast('CAMPAMENTO FUNDADO', 'Las 25 facciones te han detectado en el Sector B-4: interceptando amenazas.', 'warn');
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-red-600 hover:brightness-110 text-white font-bold transition shadow-lg flex items-center gap-1.5"
+                    >
+                      <Tent className="w-4 h-4" />
+                      <span>🏕️ Fundar Campamento & Gestionar Asedios</span>
+                    </button>
+                    <button
                       onClick={() => setViewMode('hierarchy')}
                       className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition shadow-lg"
                     >
@@ -2170,6 +2249,443 @@ PASO A PASO PARA COMPILAR DEAD LAN EN APK PARA TU MÓVIL ANDROID
           </div>
         </div>
       )}
+
+      {/* PANTALLA 8: PRIMER CAMPAMENTO REFUGIO & SISTEMA DE ASEDIO / SAQUEO DE FACCIONES */}
+      {viewMode === 'camp' && (
+        <div className="flex-1 p-3 sm:p-4 max-w-5xl mx-auto w-full space-y-4 animate-fadeIn">
+          {/* Header del Campamento */}
+          <div className="bg-gradient-to-r from-amber-950/90 via-[#050c1e] to-black p-4 rounded-2xl border border-amber-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-bold flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-red-400" />
+                  {campData.location}
+                </span>
+                <span className="text-[9px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-mono font-bold animate-pulse">
+                  25 FACCIONES EN ALERTA
+                </span>
+              </div>
+              <h2 className="text-xl font-bold font-mono text-white flex items-center gap-2 mt-0.5">
+                <Tent className="w-5 h-5 text-amber-400" />
+                {campData.name}
+              </h2>
+              <p className="text-xs text-gray-300 font-mono">
+                Primer Asentamiento Fundado tras la Fuga • Nivel de Fortificación: {campData.fortificationLevel}/5
+              </p>
+            </div>
+
+            {/* Controles de Camuflaje y Humo */}
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+              <button
+                onClick={() => {
+                  playCyberSound('switch');
+                  const nextStealth = !campData.stealthActive;
+                  setCampData({
+                    ...campData,
+                    stealthActive: nextStealth,
+                    smokeVisibility: nextStealth ? 0 : 25
+                  });
+                  showTacticalToast(
+                    nextStealth ? 'MODO SIGILO NOCTURNO' : 'FOGATAS ENCENDIDAS',
+                    nextStealth
+                      ? 'Fogatas apagadas y luces camufladas. Firma de humo reducida al 0% (invisibles para patrullas).'
+                      : 'Fogatas encendidas. Tus tropas tienen calor pero el humo es visible a 5 km.',
+                    nextStealth ? 'success' : 'warn'
+                  );
+                }}
+                className={`px-3 py-2 rounded-xl border font-bold transition flex items-center gap-1.5 active:scale-95 ${
+                  campData.stealthActive
+                    ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                    : 'bg-amber-950/50 border-amber-500/50 text-amber-300'
+                }`}
+              >
+                <Flame className={`w-3.5 h-3.5 ${campData.stealthActive ? 'text-gray-500' : 'text-amber-400'}`} />
+                <span>{campData.stealthActive ? '✓ Fogatas Apagadas (0% Humo)' : 'Modo Furtivo: Apagar Fogatas'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* HUD de Recursos del Campamento */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+            {/* Comida / Raciones */}
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <div className="flex items-center justify-between text-gray-400 text-[10px]">
+                <span>RACIONES COMIDA:</span>
+                <span className="text-amber-400 font-bold">{campData.food} raciones</span>
+              </div>
+              <div className="h-2 w-full bg-black/60 rounded-full overflow-hidden border border-amber-500/30">
+                <div className="h-full bg-amber-500" style={{ width: `${Math.min(100, campData.food)}%` }} />
+              </div>
+              <span className="text-[9px] text-gray-500">Alimenta a 44 tropas diarias</span>
+            </div>
+
+            {/* Agua Potable */}
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <div className="flex items-center justify-between text-gray-400 text-[10px]">
+                <span>AGUA POTABLE:</span>
+                <span className="text-cyan-400 font-bold">{campData.water} L</span>
+              </div>
+              <div className="h-2 w-full bg-black/60 rounded-full overflow-hidden border border-cyan-500/30">
+                <div className="h-full bg-cyan-500" style={{ width: `${Math.min(100, campData.water)}%` }} />
+              </div>
+              <span className="text-[9px] text-gray-500">Filtro de lluvia activo</span>
+            </div>
+
+            {/* Munición Balística */}
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <div className="flex items-center justify-between text-gray-400 text-[10px]">
+                <span>MUNICIÓN:</span>
+                <span className="text-red-400 font-bold">{campData.ammo} balas</span>
+              </div>
+              <div className="h-2 w-full bg-black/60 rounded-full overflow-hidden border border-red-500/30">
+                <div className="h-full bg-red-500" style={{ width: `${Math.min(100, campData.ammo)}%` }} />
+              </div>
+              <span className="text-[9px] text-gray-500">Para repeler asaltos armados</span>
+            </div>
+
+            {/* Chatarra y Fortificaciones */}
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <div className="flex items-center justify-between text-gray-400 text-[10px]">
+                <span>CHATARRA & DEFENSAS:</span>
+                <span className="text-emerald-400 font-bold">{campData.scrap} uds</span>
+              </div>
+              <div className="h-2 w-full bg-black/60 rounded-full overflow-hidden border border-emerald-500/30">
+                <div className="h-full bg-emerald-500" style={{ width: `${Math.min(100, campData.scrap)}%` }} />
+              </div>
+              <button
+                disabled={campData.scrap < 25 || campData.fortificationLevel >= 5}
+                onClick={() => {
+                  playCyberSound('approve');
+                  setCampData({
+                    ...campData,
+                    scrap: campData.scrap - 25,
+                    fortificationLevel: campData.fortificationLevel + 1
+                  });
+                  setCampRadioLogs((prev) => [
+                    `Capitán Viktor reforzó el campamento a Nivel ${campData.fortificationLevel + 1} (Torre de centinela y foso de púas).`,
+                    ...prev
+                  ]);
+                  showTacticalToast('DEFENSAS MEJORADAS', `Fortificación elevada a Nivel ${campData.fortificationLevel + 1}/5.`, 'success');
+                }}
+                className={`text-[9px] font-bold block transition ${
+                  campData.scrap >= 25 && campData.fortificationLevel < 5
+                    ? 'text-emerald-400 hover:underline'
+                    : 'text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                + Mejorar Defensas (-25 Chatarra)
+              </button>
+            </div>
+          </div>
+
+          {/* Banner de Advertencia de las 25 Facciones */}
+          <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/50 flex items-start gap-2.5 font-mono text-xs text-red-200 shadow-lg">
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5 animate-pulse" />
+            <div>
+              <strong className="text-white block">RESPUESTA DE LAS 25 FACCIONES TRAS FUNDAR TU CAMPAMENTO:</strong>
+              <p className="text-[11px] leading-relaxed text-gray-300 font-sans mt-0.5">
+                Al encender las primeras fogatas y levantar la alambrada, las facciones del páramo de 10,000 km² te han tomado en cuenta.
+                <strong> La Milicia Esclavista</strong> y <strong>Los Desolladores</strong> intentan asediarte o saquear tus víveres, mientras facciones como <strong>Los Conquistadores</strong> te exigen complots para atacar a sus enemigos jurados.
+              </p>
+            </div>
+          </div>
+
+          {/* Panel Principal: Demandas, Amenazas de Saqueo y Asedios Activos */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Lista de Amenazas de Facciones */}
+            <div className="lg:col-span-2 space-y-3 font-mono">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 text-red-400" />
+                TRANSMISIONES DE FACCIONES • ASEDIO & SAQUEO EN CURSO
+              </h3>
+
+              <div className="space-y-3">
+                {factionThreats.map((threat) => (
+                  <div
+                    key={threat.id}
+                    className={`p-4 rounded-2xl border transition-all space-y-3 font-mono text-xs ${
+                      threat.status === 'repelido'
+                        ? 'bg-emerald-950/20 border-emerald-500/40 opacity-75'
+                        : threat.status === 'aliado'
+                        ? 'bg-blue-950/20 border-blue-500/40 opacity-75'
+                        : threat.status === 'pagado' || threat.status === 'evadido'
+                        ? 'bg-stone-900/40 border-stone-700 opacity-70'
+                        : threat.type === 'asedio'
+                        ? 'bg-red-950/30 border-red-500/60 shadow-[0_0_20px_rgba(239,68,68,0.25)]'
+                        : threat.type === 'complot'
+                        ? 'bg-blue-950/30 border-blue-500/60 shadow-[0_0_20px_rgba(37,99,235,0.25)]'
+                        : 'bg-amber-950/30 border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.25)]'
+                    }`}
+                  >
+                    {/* Header de la Amenaza */}
+                    <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+                      <div>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-black/60 text-white font-bold uppercase tracking-wider">
+                          {threat.faction}
+                        </span>
+                        <h4 className="font-bold text-white text-sm mt-1">{threat.title}</h4>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-1 rounded-xl font-bold uppercase ${
+                        threat.status === 'repelido' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
+                        threat.status === 'aliado' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40' :
+                        threat.status === 'pagado' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
+                        threat.status === 'evadido' ? 'bg-stone-500/20 text-stone-300 border border-stone-500/40' :
+                        'bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse'
+                      }`}>
+                        {threat.status === 'pendiente' ? threat.type.toUpperCase() : threat.status.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Descripción y Demanda */}
+                    <p className="text-[11px] text-gray-300 leading-relaxed font-sans">
+                      {threat.description}
+                    </p>
+
+                    <div className="p-2.5 rounded-xl bg-black/60 border border-gray-800 flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                      <div>
+                        <span className="text-gray-400 block">Exigencia / Objetivo:</span>
+                        <span className="text-amber-300 font-bold">{threat.demands}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-gray-400 block">Recompensa / Botín:</span>
+                        <span className="text-emerald-400 font-bold">{threat.reward}</span>
+                      </div>
+                    </div>
+
+                    {/* Botones de Respuesta Táctica según el tipo de amenaza */}
+                    {threat.status === 'pendiente' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {threat.type === 'asedio' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                playCyberSound('reject');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  ammo: Math.max(0, campData.ammo - 10),
+                                  scrap: campData.scrap + 30
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '⚔️ ¡Asedio repelido! Sargento Morales y la escuadra de choque diezmaron a los atacantes en el desfiladero.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('¡ASEDIO REPELIDO CON ÉXITO!', 'Vehículo blindado de la Milicia capturado (+30 Chatarra).', 'success');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95 text-[11px]"
+                            >
+                              <Sword className="w-3.5 h-3.5" />
+                              <span>Repeler Asedio Armado</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'evadido' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  stealthActive: true,
+                                  smokeVisibility: 0
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '🌾 Fogatas apagadas. La patrulla militar pasó de largo en la niebla sin divisar el campamento.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('CAMUFLAJE FORESTAL EXITOSO', 'El convoy enemigo continuó de largo en la oscuridad.', 'info');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-gray-200 border border-gray-700 font-bold transition flex items-center justify-center gap-1.5 active:scale-95 text-[11px]"
+                            >
+                              <Flame className="w-3.5 h-3.5 text-gray-400" />
+                              <span>Apagar Fogatas & Sigilo</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                playCyberSound('receive');
+                                if (campData.food < 35) {
+                                  showTacticalToast('FALTA DE COMIDA', 'No tienes suficientes raciones para pagar el tributo.', 'warn');
+                                  return;
+                                }
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'pagado' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  food: campData.food - 35
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '📦 Pagadas 35 raciones de tributo a la Milicia para comprar 24h de tregua.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('TRIBUTO PAGADO', '-35 Raciones entregadas para evitar la destrucción del campamento.', 'warn');
+                              }}
+                              className="py-2 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold transition flex items-center justify-center gap-1 text-[10px]"
+                            >
+                              <span>Ceder Raciones (-35 Comida)</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampRadioLogs((prev) => [
+                                  '🕵️ Lugarteniente Vance saboteó los tanques de gasolina de la Milicia antes de que salieran.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('SABOTAJE NOCTURNO', 'Vance neutralizó el convoy en su propia base.', 'success');
+                              }}
+                              className="py-2 px-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 font-bold transition flex items-center justify-center gap-1 text-[10px]"
+                            >
+                              <span>Infiltración Vance (Asesinato)</span>
+                            </button>
+                          </>
+                        )}
+
+                        {threat.type === 'complot' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'aliado' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  ammo: campData.ammo + 50,
+                                  food: campData.food + 20
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '🤝 Asalto conjunto exitoso con Los Conquistadores. Repartidas 50 municiones y 20 raciones.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('COMPLOT COMPLETADO', 'Alianza sellada con Los Conquistadores (+50 Munición).', 'success');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95 text-[11px]"
+                            >
+                              <Users className="w-3.5 h-3.5" />
+                              <span>Aceptar Complot & Saquear Convoy</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                playCyberSound('click');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'evadido' } : t))
+                                );
+                                setCampRadioLogs((prev) => [
+                                  '🚫 Rechazada la oferta de Los Conquistadores. Se retiran con recelo a su territorio.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('OFERTA RECHAZADA', 'Mantienes la neutralidad en el Sector B-4.', 'info');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-gray-300 border border-gray-700 font-bold transition flex items-center justify-center gap-1.5 active:scale-95 text-[11px]"
+                            >
+                              <span>Rechazar Petición de Ataque</span>
+                            </button>
+                          </>
+                        )}
+
+                        {threat.type === 'saqueo' && (
+                          <>
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampData({
+                                  ...campData,
+                                  scrap: campData.scrap + 20
+                                });
+                                setCampRadioLogs((prev) => [
+                                  '💥 Viktor activó las trampas sonoras y fosos de estacas. Los Desolladores huyeron dispersos.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('¡SAQUEO FRUSTRADO!', 'Almacén de víveres protegido al 100%. (+20 Chatarra).', 'success');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95 text-[11px]"
+                            >
+                              <Zap className="w-3.5 h-3.5" />
+                              <span>Activar Trampas Sonoras con Pólvora</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                playCyberSound('approve');
+                                setFactionThreats(
+                                  factionThreats.map((t) => (t.id === threat.id ? { ...t, status: 'repelido' } : t))
+                                );
+                                setCampRadioLogs((prev) => [
+                                  '🏹 Emboscada en el perímetro: 2 saqueadores capturados como prisioneros para interrogatorio.',
+                                  ...prev
+                                ]);
+                                showTacticalToast('EMBOSCADA EXITOSA', '2 Prisioneros capturados con información de bases enemigas.', 'info');
+                              }}
+                              className="py-2.5 px-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-gray-300 border border-gray-700 font-bold transition flex items-center justify-center gap-1.5 active:scale-95 text-[11px]"
+                            >
+                              <Target className="w-3.5 h-3.5" />
+                              <span>Emboscada de Centinelas</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Consola de Radiofrecuencia y Estado de Centinelas */}
+            <div className="bg-[#050c1e] p-4 rounded-2xl border border-gray-800 space-y-3 shadow-xl font-mono text-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+                  <h4 className="font-bold text-white flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-amber-400" />
+                    RADIOFRECUENCIA DE SECTOR
+                  </h4>
+                  <span className="text-[10px] text-amber-400 animate-pulse">CANAL ABIERTO</span>
+                </div>
+
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1 mt-2.5 text-[11px]">
+                  {campRadioLogs.map((log, index) => (
+                    <div
+                      key={index}
+                      className="p-2.5 rounded-xl bg-black/60 border border-gray-800 text-gray-300 leading-relaxed"
+                    >
+                      <span className="text-[9px] text-amber-400 block mb-0.5">ORDEN DE CAMPAMENTO:</span>
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-800 space-y-2">
+                <div className="p-2.5 rounded-xl bg-black/40 border border-gray-800 text-[10px] text-gray-400 space-y-1">
+                  <strong className="text-white block">Estado de la Defensa:</strong>
+                  <div>• Centinelas apostados: <strong>{campData.guardsAssigned} prisioneros armados</strong></div>
+                  <div>• Visibilidad de humo: <strong>{campData.smokeVisibility}% ({campData.stealthActive ? 'Oculto' : 'Visible a patrullas'})</strong></div>
+                  <div>• Facciones hostiles activas: <strong>25 ejércitos en el mapa de 10,000 km²</strong></div>
+                </div>
+
+                <button
+                  onClick={() => setViewMode('hierarchy')}
+                  className="w-full py-2.5 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 font-bold transition flex items-center justify-center gap-1.5"
+                >
+                  <Crown className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Ver Tropas en la Pirámide de Mando</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
