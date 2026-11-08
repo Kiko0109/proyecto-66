@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppMode } from '../types';
-import { Shield, BookOpen, Gamepad2 } from 'lucide-react';
+import { Shield, BookOpen, Gamepad2, Skull } from 'lucide-react';
 
 interface AppModeSwitcherProps {
   currentApp: AppMode;
@@ -14,6 +14,13 @@ export const AppModeSwitcher: React.FC<AppModeSwitcherProps> = ({
   neonIntensity
 }) => {
   const apps: { id: AppMode; label: string; badge: string; icon: React.ReactNode; desc: string }[] = [
+    {
+      id: 'deadlan',
+      label: 'DEAD LAN',
+      badge: '🧟 3D LAN',
+      icon: <Skull className="w-3.5 h-3.5 text-rose-500" />,
+      desc: 'Supervivencia Zombi P2P'
+    },
     {
       id: 'juegos',
       label: 'Games Hub',
