@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.O.V.E.R.E.I.G.N. // Tactical Survival Simulator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tactical: {
+                            900: '#0c1017',
+                            800: '#131c28',
+                            700: '#1e293b',
+                            600: '#334155',
+                            accent: '#10b981',
+                            accentHover: '#059669',
+                            danger: '#ef4444',
+                            warning: '#f59e0b',
+                            gold: '#d97706'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c1017;
+            color: #e2e8f0;
+        }
+        .font-mono-tactical {
+            font-family: 'Share Tech Mono', monospace;
+        }
+        /* Custom scrollbar for tactical logs */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #131c28;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 2px;
+        }
+        .radar-sweep {
+            background: conic-gradient(from 0deg at 50% 50%, rgba(16, 185, 129, 0) 0deg, rgba(16, 185, 129, 0.2) 360deg);
+            animation: radarRotate 4s linear infinite;
+        }
+        @keyframes radarRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- Top Tactical Header -->
+    <header class="bg-tactical-800 border-b border-tactical-600 px-4 py-2 flex items-center justify-between z-10 shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+            <div>
+                <h1 class="font-mono-tactical text-lg tracking-widest text-emerald-400 font-bold">S.O.V.E.R.E.I.G.N. // v2.4</h1>
+                <p class="text-xs text-slate-400">SECTOR: 10,000 KM² // LAN MESH ACTIVE</p>
+            </div>
+        </div>
+
+        <!-- Resource Ticker -->
+        <div class="hidden md:flex items-center space-x-6 font-mono-tactical text-sm">
+            <div class="flex items-center space-x-2 bg-tactical-900 px-3 py-1 rounded border border-tactical-700">
+                <i class="fa-solid fa-box text-amber-500"></i>
+                <span class="text-slate-400">SCRAP:</span>
+                <span id="res-scrap" class="text-white font-bold">340</span>
+            </div>
+            <div class="flex items-center space-x-2 bg-tactical-900 px-3 py-1 rounded border border-tactical-700">
+                <i class="fa-solid fa-gas-pump text-orange-500"></i>
+                <span class="text-slate-400">FUEL:</span>
+                <span id="res-fuel" class="text-white font-bold">120L</span>
+            </div>
+            <div class="flex items-center space-x-2 bg-tactical-900 px-3 py-1 rounded border border-tactical-700">
+                <i class="fa-solid fa-utensils text-emerald-500"></i>
+                <span class="text-slate-400">RATIONS:</span>
+                <span id="res-food" class="text-white font-bold">85</span>
+            </div>
+            <div class="flex items-center space-x-2 bg-tactical-900 px-3 py-1 rounded border border-tactical-700">
+                <i class="fa-solid fa-shield-halved text-blue-400"></i>
+                <span class="text-slate-400">TROOPS:</span>
+                <span id="res-troops" class="text-white font-bold">12</span>
+            </div>
+        </div>
+
+        <!-- Mobile View Mode Buttons / Actions -->
+        <div class="flex items-center space-x-2">
+            <button onclick="triggerAlertModal('SYSTEM MESSAGE', 'Mesh network stable. 25 AI factions synchronized. 3 player cells online.')" class="bg-tactical-700 hover:bg-tactical-600 text-slate-200 px-3 py-1.5 rounded text-xs font-mono border border-tactical-600">
+                <i class="fa-solid fa-satellite-dish mr-1"></i> STATS
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Application Body -->
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+        <!-- Navigation Sidebar (Mobile & Desktop) -->
+        <nav class="bg-tactical-800 border-t md:border-t-0 md:border-r border-tactical-600 flex md:flex-col justify-around md:justify-start md:w-64 p-2 md:p-4 space-x-1 md:space-x-0 md:space-y-2 z-10 order-2 md:order-1">
+            <div class="hidden md:block pb-2 mb-2 border-b border-tactical-700">
+                <span class="text-xs font-mono text-slate-400 tracking-wider">COMMAND MODULES</span>
+            </div>
+            <button onclick="switchTab('map')" id="btn-tab-map" class="flex-1 md:flex-none flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition bg-emerald-600 text-white shadow-md">
+                <i class="fa-solid fa-map-location-dot w-5 text-center"></i>
+                <span class="hidden md:inline">Tactical Map</span>
+            </button>
+            <button onclick="switchTab('prison')" id="btn-tab-prison" class="flex-1 md:flex-none flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition hover:bg-tactical-700 text-slate-300">
+                <i class="fa-solid fa-person-running-fast w-5 text-center"></i>
+                <span class="hidden md:inline">Prison Break</span>
+            </button>
+            <button onclick="switchTab('diplomacy')" id="btn-tab-diplomacy" class="flex-1 md:flex-none flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition hover:bg-tactical-700 text-slate-300">
+                <i class="fa-solid fa-handshake w-5 text-center"></i>
+                <span class="hidden md:inline">Safe Zone & Trade</span>
+            </button>
+            <button onclick="switchTab('intel')" id="btn-tab-intel" class="flex-1 md:flex-none flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition hover:bg-tactical-700 text-slate-300">
+                <i class="fa-solid fa-user-secret w-5 text-center"></i>
+                <span class="hidden md:inline">Intel & Complots</span>
+            </button>
+        </nav>
+
+        <!-- Main Dynamic Content Workspace -->
+        <main class="flex-1 flex flex-col bg-tactical-900 overflow-hidden relative order-1 md:order-2">
+
+            <!-- TAB 1: TACTICAL MAP -->
+            <div id="tab-map" class="tab-content flex-1 flex flex-col p-4 overflow-y-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                    <div>
+                        <h2 class="text-xl font-bold font-mono text-white flex items-center">
+                            <i class="fa-solid fa-globe text-emerald-500 mr-2"></i> 10,000 KM² STRATEGIC THEATER
+                        </h2>
+                        <p class="text-xs text-slate-400">Click any sector to deploy scouts, plan supply routes, or launch espionage operations.</p>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs font-mono">
+                        <span class="bg-red-950 text-red-400 border border-red-800 px-2 py-1 rounded">Conquistadores: High Threat</span>
+                        <span class="bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-1 rounded">Player Faction: Active</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+                    <!-- Interactive SVG Map Canvas Simulator -->
+                    <div class="lg:col-span-2 bg-tactical-800 rounded-xl border border-tactical-600 p-3 flex flex-col relative overflow-hidden shadow-2xl">
+                        <div class="absolute top-4 left-4 z-10 bg-tactical-900/80 backdrop-blur px-3 py-1.5 rounded border border-tactical-700 text-xs font-mono flex items-center space-x-3">
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1"></span> Player Base</span>
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-red-500 inline-block mr-1"></span> Conquistadores</span>
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block mr-1"></span> Slave Camp</span>
+                            <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-1"></span> Safe Zone</span>
+                        </div>
+
+                        <!-- Map Grid Visualization -->
+                        <div id="map-container" class="flex-1 bg-tactical-900 rounded-lg relative overflow-hidden border border-tactical-700 flex items-center justify-center cursor-crosshair">
+                            <!-- Background Map Graphic Grid Overlay -->
+                            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:24px_24px]"></div>
+                            
+                            <!-- SVG Map Nodes -->
+                            <svg class="w-full h-full absolute inset-0 pointer-events-none" viewBox="0 0 800 500">
+                                <!-- Connection Lines -->
+                                <line x1="150" y1="120" x2="350" y2="200" stroke="#334155" stroke-width="2" stroke-dasharray="4" />
+                                <line x1="350" y1="200" x2="650" y2="150" stroke="#334155" stroke-width="2" stroke-dasharray="4" />
+                                <line x1="350" y1="200" x2="400" y2="380" stroke="#334155" stroke-width="2" stroke-dasharray="4" />
+                                <line x1="650" y1="150" x2="600" y2="400" stroke="#334155" stroke-width="2" stroke-dasharray="4" />
+                            </svg>
+
+                            <!-- Node Markers -->
+                            <div onclick="selectMapNode('player')" class="absolute top-[20%] left-[18%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+                                <div class="w-10 h-10 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center animate-pulse shadow-lg shadow-emerald-500/20">
+                                    <i class="fa-solid fa-flag text-emerald-400"></i>
+                                </div>
+                                <div class="absolute top-12 left-1/2 transform -translate-x-1/2 bg-tactical-800 text-xs px-2 py-0.5 rounded border border-emerald-500 whitespace-nowrap text-emerald-300 font-mono">Your Outpost</div>
+                            </div>
+
+                            <div onclick="selectMapNode('slaves')" class="absolute top-[38%] left-[42%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+                                <div class="w-10 h-10 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-link-slash text-amber-400"></i>
+                                </div>
+                                <div class="absolute top-12 left-1/2 transform -translate-x-1/2 bg-tactical-800 text-xs px-2 py-0.5 rounded border border-amber-500 whitespace-nowrap text-amber-300 font-mono">Slave Labor Camp</div>
+                            </div>
+
+                            <div onclick="selectMapNode('conquistadores')" class="absolute top-[28%] left-[80%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+                                <div class="w-10 h-10 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-chess-rook text-red-400"></i>
+                                </div>
+                                <div class="absolute top-12 left-1/2 transform -translate-x-1/2 bg-tactical-800 text-xs px-2 py-0.5 rounded border border-red-500 whitespace-nowrap text-red-300 font-mono">Conquistadores HQ</div>
+                            </div>
+
+                            <div onclick="selectMapNode('safezone')" class="absolute top-[74%] left-[48%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+                                <div class="w-10 h-10 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-store text-blue-400"></i>
+                                </div>
+                                <div class="absolute top-12 left-1/2 transform -translate-x-1/2 bg-tactical-800 text-xs px-2 py-0.5 rounded border border-blue-500 whitespace-nowrap text-blue-300 font-mono">Neutral Trading Hub</div>
+                            </div>
+
+                            <div onclick="selectMapNode('bunker')" class="absolute top-[78%] left-[72%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+                                <div class="w-10 h-10 rounded-full bg-purple-500/20 border-2 border-purple-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-shield text-purple-400"></i>
+                                </div>
+                                <div class="absolute top-12 left-1/2 transform -translate-x-1/2 bg-tactical-800 text-xs px-2 py-0.5 rounded border border-purple-500 whitespace-nowrap text-purple-300 font-mono">Tech Bunker</div>
+                            </div>
+                        </div>
+
+                        <!-- Map Legend / Controls -->
+                        <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
+                            <span>COORDS: [34.22° N, 88.10° W]</span>
+                            <span class="text-emerald-400 font-mono"><i class="fa-solid fa-radar mr-1"></i> 25 Factions Synchronized</span>
+                        </div>
+                    </div>
+
+                    <!-- Sector Details Panel -->
+                    <div class="bg-tactical-800 rounded-xl border border-tactical-600 p-4 flex flex-col justify-between shadow-xl">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 border-b border-tactical-700 mb-3">
+                                <h3 id="node-title" class="font-bold font-mono text-emerald-400 text-base">SELECT SECTOR</h3>
+                                <span id="node-status" class="text-xs bg-tactical-900 px-2 py-0.5 rounded border border-tactical-700 text-slate-300">STATUS: NORMAL</span>
+                            </div>
+                            <p id="node-desc" class="text-xs text-slate-300 leading-relaxed mb-4">
+                                Click any node on the 10,000 km² tactical map to inspect intelligence reports, deploy supply caravans, or order espionage hits.
+                            </p>
+                            <div class="space-y-2 mb-4 font-mono text-xs">
+                                <div class="flex justify-between bg-tactical-900 p-2 rounded border border-tactical-700">
+                                    <span class="text-slate-400">CONTROLLING FACTION:</span>
+                                    <span id="node-faction" class="text-white font-bold">--</span>
+                                </div>
+                                <div class="flex justify-between bg-tactical-900 p-2 rounded border border-tactical-700">
+                                    <span class="text-slate-400">THREAT LEVEL:</span>
+                                    <span id="node-threat" class="text-amber-400 font-bold">--</span>
+                                </div>
+                                <div class="flex justify-between bg-tactical-900 p-2 rounded border border-tactical-700">
+                                    <span class="text-slate-400">DEFENSES:</span>
+                                    <span id="node-defense" class="text-slate-300">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <button onclick="deployCaravan()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs py-2.5 rounded font-bold transition shadow">
+                                <i class="fa-solid fa-truck-fast mr-2"></i> ESTABLISH TRADE ROUTE
+                            </button>
+                            <button onclick="dispatchSpy()" class="w-full bg-tactical-700 hover:bg-tactical-600 text-slate-200 font-mono text-xs py-2.5 rounded font-bold border border-tactical-600 transition">
+                                <i class="fa-solid fa-user-ninja mr-2"></i> SEND INFILTRATION SPY
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: PRISON BREAK SIMULATION -->
+            <div id="tab-prison" class="tab-content hidden flex-1 flex flex-col p-4 overflow-y-auto">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold font-mono text-white flex items-center">
+                        <i class="fa-solid fa-person-running-fast text-amber-500 mr-2"></i> PROTOCOL: PRISON BREAK (DAY 1)
+                    </h2>
+                    <p class="text-xs text-slate-400">You begin as an unequipped prisoner in a labor camp controlled by the Elite Slave Militia. Plan your escape or start a riot.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+                    <!-- Prison Status / Narrative Screen -->
+                    <div class="lg:col-span-2 bg-tactical-800 rounded-xl border border-tactical-600 p-4 flex flex-col justify-between shadow-xl">
+                        <div class="space-y-4">
+                            <div class="bg-tactical-900 p-3 rounded-lg border border-tactical-700 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded bg-red-950 border border-red-800 flex items-center justify-center text-red-400 font-mono font-bold">04</div>
+                                    <div>
+                                        <div class="text-xs font-mono text-slate-400">PRISONER ID #492-X</div>
+                                        <div class="text-sm font-bold text-white">Sector C-9 Labour Compound</div>
+                                    </div>
+                                </div>
+                                <span id="prison-alert-badge" class="px-2.5 py-1 rounded bg-amber-950 text-amber-400 border border-amber-800 text-xs font-mono">ALERT LEVEL: SECURE</span>
+                            </div>
+
+                            <div id="prison-narrative" class="bg-tactical-900 rounded-lg p-4 border border-tactical-700 font-mono text-xs text-slate-300 leading-relaxed min-h-[160px] max-h-[200px] overflow-y-auto space-y-2">
+                                <p class="text-emerald-400">> [SYSTEM INITIALIZED] You wake up on a cold concrete floor in Block 4. Electric fences hum outside. Guard dogs bark in the distance.</p>
+                                <p>> Searchlights sweep across the courtyard every 12 seconds. You need to get out before morning roll call.</p>
+                            </div>
+
+                            <!-- Inmate Allies to Recruit -->
+                            <div>
+                                <span class="text-xs font-mono text-slate-400 block mb-2">RECRUIT CELL INMATES:</span>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <div onclick="selectInmate('engineer')" id="inmate-engineer" class="bg-tactical-900 p-2.5 rounded border border-tactical-700 cursor-pointer hover:border-emerald-500 transition">
+                                        <div class="font-bold text-xs text-white">Viktor (Engineer)</div>
+                                        <div class="text-[10px] text-slate-400">Can disable electric fence controllers.</div>
+                                    </div>
+                                    <div onclick="selectInmate('strategist')" id="inmate-strategist" class="bg-tactical-900 p-2.5 rounded border border-tactical-700 cursor-pointer hover:border-emerald-500 transition">
+                                        <div class="font-bold text-xs text-white">Major Vance (Ex-Officer)</div>
+                                        <div class="text-[10px] text-slate-400">Knows armeria vault codes.</div>
+                                    </div>
+                                    <div onclick="selectInmate('muscle')" id="inmate-muscle" class="bg-tactical-900 p-2.5 rounded border border-tactical-700 cursor-pointer hover:border-emerald-500 transition">
+                                        <div class="font-bold text-xs text-white">Gorilla (Muscle)</div>
+                                        <div class="text-[10px] text-slate-400">Can smash reinforced guard doors.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Controls -->
+                        <div class="grid grid-cols-2 gap-2 pt-4 border-t border-tactical-700">
+                            <button onclick="executePrisonAction('stealth')" class="bg-tactical-700 hover:bg-tactical-600 text-slate-200 font-mono text-xs py-3 rounded font-bold border border-tactical-600 transition">
+                                <i class="fa-solid fa-ghost mr-2 text-emerald-400"></i> STEALTH ESCAPE
+                            </button>
+                            <button onclick="executePrisonAction('riot')" class="bg-red-950 hover:bg-red-900 text-red-300 font-mono text-xs py-3 rounded font-bold border border-red-800 transition">
+                                <i class="fa-solid fa-fire mr-2 text-red-400"></i> ORCHESTRATE RIOT
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Post-Break Strategy Choices -->
+                    <div class="bg-tactical-800 rounded-xl border border-tactical-600 p-4 flex flex-col justify-between shadow-xl">
+                        <div>
+                            <h3 class="font-bold font-mono text-white text-sm mb-3">POST-ESCAPE DOCTRINE</h3>
+                            <p class="text-xs text-slate-400 mb-4">Once you break out of the slave camp, you must decide how to establish your permanent faction base.</p>
+                            
+                            <div class="space-y-3 font-mono text-xs">
+                                <div class="bg-tactical-900 p-3 rounded border border-tactical-700">
+                                    <div class="text-emerald-400 font-bold mb-1"><i class="fa-solid fa-tree mr-1"></i> Nomad Forest Hideout</div>
+                                    <p class="text-[11px] text-slate-400 font-sans">Low visibility, high natural camouflage against enemy drones and scouts.</p>
+                                </div>
+                                <div class="bg-tactical-900 p-3 rounded border border-tactical-700">
+                                    <div class="text-amber-400 font-bold mb-1"><i class="fa-solid fa-building mr-1"></i> Usurp Slave Camp</div>
+                                    <p class="text-[11px] text-slate-400 font-sans">High risk. Defend the captured stronghold against counter-attacks for instant military power.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-tactical-900 p-3 rounded border border-tactical-700 text-center">
+                            <span class="text-[11px] font-mono text-slate-400">STATUS: <span id="escape-status" class="text-amber-400 font-bold">STILL IN CARCERAL ZONE</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SAFE ZONE & TRADE HUB -->
+            <div id="tab-diplomacy" class="tab-content hidden flex-1 flex flex-col p-4 overflow-y-auto">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold font-mono text-white flex items-center">
+                        <i class="fa-solid fa-handshake text-blue-400 mr-2"></i> NEUTRAL ZONE // DIPLOMATIC LOUNGE
+                    </h2>
+                    <p class="text-xs text-slate-400">Weapons locked. Meet emissaries from the 25 factions to trade goods, form pacts, or pay bribes.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+                    <!-- Faction List -->
+                    <div class="bg-tactical-800 rounded-xl border border-tactical-600 p-4 flex flex-col shadow-xl">
+                        <h3 class="font-bold font-mono text-white text-xs mb-3 tracking-wider">ACTIVE FACTION DIPLOMACY</h3>
+                        <div class="space-y-2 flex-1 overflow-y-auto pr-1">
+                            <div onclick="selectFaction('conquistadores')" class="bg-tactical-900 p-3 rounded-lg border border-tactical-700 cursor-pointer hover:border-red-500 transition flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-xs text-white">The Conquistadores</div>
+                                    <div class="text-[10px] text-red-400 font-mono">RELATION: HOSTILE (-80)</div>
+                                </div>
+                                <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                            </div>
+                            <div onclick="selectFaction('slaves')" class="bg-tactical-900 p-3 rounded-lg border border-tactical-700 cursor-pointer hover:border-amber-500 transition flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-xs text-white">Elite Slave Militia</div>
+                                    <div class="text-[10px] text-amber-400 font-mono">RELATION: NEUTRAL (-10)</div>
+                                </div>
+                                <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                            </div>
+                            <div onclick="selectFaction('bunker')" class="bg-tactical-900 p-3 rounded-lg border border-tactical-700 cursor-pointer hover:border-emerald-500 transition flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-xs text-white">Tech Bunker Deserters</div>
+                                    <div class="text-[10px] text-emerald-400 font-mono">RELATION: FRIENDLY (+45)</div>
+                                </div>
+                                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                            </div>
+                            <div onclick="selectFaction('highway')" class="bg-tactical-900 p-3 rounded-lg border border-tactical-700 cursor-pointer hover:border-blue-500 transition flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-xs text-white">Highway Motorized Lords</div>
+                                    <div class="text-[10px] text-slate-400 font-mono">RELATION: NEUTRAL (+5)</div>
+                                </div>
+                                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Negotiation Console -->
+                    <div class="lg:col-span-2 bg-tactical-800 rounded-xl border border-tactical-600 p-4 flex flex-col justify-between shadow-xl">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 border-b border-tactical-700 mb-4">
+                                <div id="diplomacy-faction-name" class="font-bold font-mono text-emerald-400 text-sm">SELECT A FACTION TO NEGOTIATE</div>
+                                <span class="text-xs font-mono text-slate-400 bg-tactical-900 px-2 py-0.5 rounded border border-tactical-700">ARMISTICE ZONE</span>
+                            </div>
+                            <div id="diplomacy-dialog" class="bg-tactical-900 rounded-lg p-4 border border-tactical-700 font-mono text-xs text-slate-300 leading-relaxed mb-4 min-h-[120px]">
+                                "Welcome to the neutral enclave. Keep your sidearms holstered. What business brings you to our table?"
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 font-mono text-xs mb-4">
+                                <div class="bg-tactical-900 p-3 rounded border border-tactical-700">
+                                    <span class="text-slate-400 block mb-1">MARKET TRADE RATE:</span>
+                                    <span class="text-white font-bold">100 Scrap = 25 Fuel</span>
+                                </div>
+                                <div class="bg-tactical-900 p-3 rounded border border-tactical-700">
+                                    <span class="text-slate-400 block mb-1">BRIBES / TRIBUTE:</span>
+                                    <span class="text-amber-400 font-bold">50 Rations for 10-day Truce</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="executeDiplomacyAction('trade')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs py-3 rounded font-bold transition shadow">
+                                <i class="fa-solid fa-coins mr-1"></i> TRADE GOODS
+                            </button>
+                            <button onclick="executeDiplomacyAction('pact')" class="bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs py-3 rounded font-bold transition shadow">
+                                <i class="fa-solid fa-file-signature mr-1"></i> PROPOSE PACT
+                            </button>
+                            <button onclick="executeDiplomacyAction('bribe')" class="bg-amber-600 hover:bg-amber-500 text-white font-mono text-xs py-3 rounded font-bold transition shadow">
+                                <i class="fa-solid fa-sack-dollar mr-1"></i> BRIBE LEADER
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: INTEL & COMPLOTS -->
+            <div id="tab-intel" class="tab-content hidden flex-1 flex flex-col p-4 overflow-y-auto">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold font-mono text-white flex items-center">
+                        <i class="fa-solid fa-user-secret text-purple-400 mr-2"></i> INTEL, BETRAYALS & COMPLOTS
+                    </h2>
+                    <p class="text-xs text-slate-400">Orchestrate covert operations, assassinate rival leaders, or fund proxy wars between competing factions.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+                    <!-- Live Event / War Ticker -->
+                    <div class="bg-tactical-800 rounded-xl border border-tactical-600 p-4 flex flex-col shadow-xl">
+                        <h3 class="font-bold font-mono text-white text-xs mb-3 tracking-wider">LIVE THEATER LOGS</h3>
+                        <div id="theater-log" class="space-y-2 flex-1 overflow-y-auto font-mono text-xs pr-1">
+                            <div class="bg-tactical-900 p-2.5 rounded border border-tactical-700">
+                                <span class="text-red-400 block text-[10px]">04:12 - CONQUISTADORES</span>
+                                <span class="text-slate-300">Advanced 3 armored units toward Sector 4.</span>
+                            </div>
+                            <div class="bg-tactical-900 p-2.5 rounded border border-tactical-700">
+                                <span class="text-amber-400 block text-[10px]">03:45 - SLAVE MILITIA</span>
+                                <span class="text-slate-300">Crushed a civilian refugee caravan near Dam 3.</span>
+                            </div>
+                            <div class="bg-tactical-900 p-2.5 rounded border border-tactical-700">
+                                <span class="text-emerald-400 block text-[10px]">02:30 - PLAYER ALLIANCE</span>
+                                <span class="text-slate-300">Successfully smuggled fuel through highway blockade.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Complot & Assassination Console -->
+                    <div class="lg:col-span-2 bg-tactical-800 rounded-xl border border-tactical-600 p-4 flex flex-col justify-between shadow-xl">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 border-b border-tactical-700 mb-4">
+                                <h3 class="font-bold font-mono text-purple-400 text-sm">COVERT OPERATIONS & BACKSTABBING</h3>
+                                <span class="text-xs font-mono text-slate-400 bg-tactical-900 px-2 py-0.5 rounded border border-tactical-700">BLACK OPS ACTIVE</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mb-4">
+                                When alliances shatter, retaliate through shadows. Fund proxy wars or send elite spies to eliminate enemy commanders.
+                            </p>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="bg-tactical-900 p-3 rounded-lg border border-tactical-700 flex items-center justify-between">
+                                    <div>
+                                        <div class="font-bold text-xs text-white font-mono">Operation: Proxy War</div>
+                                        <div class="text-[11px] text-slate-400">Pay Highway Lords 150 Scrap to ambush Conquistador supply trucks.</div>
+                                    </div>
+                                    <button onclick="executeComplot('proxy')" class="bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs px-3 py-2 rounded font-bold transition">EXECUTE</button>
+                                </div>
+                                <div class="bg-tactical-900 p-3 rounded-lg border border-tactical-700 flex items-center justify-between">
+                                    <div>
+                                        <div class="font-bold text-xs text-white font-mono">Coup d'État & Assassination</div>
+                                        <div class="text-[11px] text-slate-400">Send spy team to eliminate Slave Militia warlord and usurp base.</div>
+                                    </div>
+                                    <button onclick="executeComplot('coup')" class="bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs px-3 py-2 rounded font-bold transition">EXECUTE</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="complot-result" class="bg-tactical-900 p-3 rounded border border-tactical-700 font-mono text-xs text-emerald-400 text-center">
+                            Awaiting tactical command order...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Custom Modal Notification Box (Replaces alert/confirm) -->
+    <div id="tactical-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-tactical-800 border border-tactical-600 rounded-xl p-5 max-w-md w-full shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-tactical-700 mb-3">
+                <h3 id="modal-title" class="font-bold font-mono text-emerald-400 text-sm">TACTICAL REPORT</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="modal-message" class="text-xs text-slate-300 font-mono leading-relaxed mb-5">
+                Placeholder message content.
+            </p>
+            <div class="flex justify-end">
+                <button onclick="closeModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs px-4 py-2 rounded font-bold transition">ACKNOWLEDGE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive JavaScript Simulation Engine -->
+    <script>
+        // Game State Variables
+        let gameState = {
+            scrap: 340,
+            fuel: 120,
+            food: 85,
+            troops: 12,
+            selectedInmate: null,
+            escaped: false,
+            selectedFaction: 'conquistadores'
+        };
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            // Reset navigation button highlights
+            ['map', 'prison', 'diplomacy', 'intel'].forEach(t => {
+                const btn = document.getElementById('btn-tab-' + t);
+                if(t === tabId) {
+                    btn.className = "flex-1 md:flex-none flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition bg-emerald-600 text-white shadow-md";
+                } else {
+                    btn.className = "flex-1 md:flex-none flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition hover:bg-tactical-700 text-slate-300";
+                }
+            });
+        }
+
+        // Modal Helper (Replaces alert)
+        function triggerAlertModal(title, message) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('tactical-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('tactical-modal').classList.add('hidden');
+        }
+
+        // Map Node Selection
+        function selectMapNode(nodeType) {
+            const title = document.getElementById('node-title');
+            const desc = document.getElementById('node-desc');
+            const faction = document.getElementById('node-faction');
+            const threat = document.getElementById('node-threat');
+            const defense = document.getElementById('node-defense');
+
+            if(nodeType === 'player') {
+                title.innerText = "YOUR OUTPOST (SECTOR 1)";
+                desc.innerText = "Your primary survival sanctuary. Houses 12 loyal troops, makeshift workshops, and storage crates.";
+                faction.innerText = "Player Cell (You)";
+                threat.innerText = "Moderate";
+                defense.innerText = "Level 2 Wooden Walls & Turret";
+            } else if(nodeType === 'slaves') {
+                title.innerText = "SLAVE LABOR CAMP #4";
+                desc.innerText = "Brutal industrial compound guarded by elite patrols. High source of scrap and captive recruits.";
+                faction.innerText = "Elite Slave Militia";
+                threat.innerText = "EXTREME";
+                defense.innerText = "Electric Fences & Sniper Towers";
+            } else if(nodeType === 'conquistadores') {
+                title.innerText = "CONQUISTADORES HEADQUARTERS";
+                desc.innerText = "Hyper-aggressive expansionist army base. Heavily armored APCs and anti-air missile batteries.";
+                faction.innerText = "The Conquistadores";
+                threat.innerText = "MAXIMUM";
+                defense.innerText = "Bunker Fortifications & AA Battery";
+            } else if(nodeType === 'safezone') {
+                title.innerText = "NEUTRAL TRADING HUB";
+                desc.innerText = "Converted railway station. Strict armistice zone where all factions trade peacefully.";
+                faction.innerText = "Neutral Enclave";
+                threat.innerText = "Zero (Protected)";
+                defense.innerText = "Automated Security Drones";
+            } else if(nodeType === 'bunker') {
+                title.innerText = "TECH BUNKERS";
+                desc.innerText = "Underground subterranean military labs filled with advanced schematics and generators.";
+                faction.innerText = "Tech Deserters";
+                threat.innerText = "High";
+                defense.innerText = "Heavy Blast Doors";
+            }
+        }
+
+        function deployCaravan() {
+            if(gameState.fuel < 20) {
+                triggerAlertModal("LOGISTICS ERROR", "Insufficient fuel to dispatch a secure trade caravan.");
+                return;
+            }
+            gameState.fuel -= 20;
+            gameState.scrap += 65;
+            updateResources();
+            triggerAlertModal("CARAVAN SUCCESS", "Trade caravan successfully completed route. +65 Scrap acquired.");
+            addLog("PLAYER LOGISTICS", "Caravan delivered supplies successfully across Sector 2.");
+        }
+
+        function dispatchSpy() {
+            gameState.scrap -= 30;
+            updateResources();
+            triggerAlertModal("SPY INFILTRATION", "Agent deployed into enemy territory. Sabotage report expected in 24 hours.");
+            addLog("BLACK OPS", "Spy team infiltrated enemy perimeter undetected.");
+        }
+
+        // Prison Break Logic
+        function selectInmate(type) {
+            gameState.selectedInmate = type;
+            ['engineer', 'strategist', 'muscle'].forEach(t => {
+                document.getElementById('inmate-' + t).classList.remove('border-emerald-500', 'bg-tactical-800');
+            });
+            document.getElementById('inmate-' + type).classList.add('border-emerald-500', 'bg-tactical-800');
+            
+            const narrative = document.getElementById('prison-narrative');
+            if(type === 'engineer') narrative.innerHTML += `<p class="text-blue-400">> Viktor joined your escape group. Electric fence security bypassed.</p>`;
+            if(type === 'strategist') narrative.innerHTML += `<p class="text-blue-400">> Major Vance joined your group. Armory codes decrypted.</p>`;
+            if(type === 'muscle') narrative.innerHTML += `<p class="text-blue-400">> Gorilla joined your group. Guard doors can now be breached.</p>`;
+        }
+
+        function executePrisonAction(method) {
+            const narrative = document.getElementById('prison-narrative');
+            if(method === 'stealth') {
+                narrative.innerHTML += `<p class="text-emerald-400">> [SUCCESS] Using stealth tactics, you slipped past searchlights and cut through perimeter wire into freedom!</p>`;
+            } else {
+                narrative.innerHTML += `<p class="text-red-400">> [RIOT] Full-scale riot initiated! Guard towers overwhelmed in a brutal firefight. Camp captured!</p>`;
+            }
+            gameState.escaped = true;
+            document.getElementById('escape-status').innerText = "ESCAPED & FOUNDED CAMP";
+            document.getElementById('escape-status').className = "text-emerald-400 font-bold";
+            triggerAlertModal("ESCAPE SUCCESSFUL", "You have broken out of the labor camp and established your independent faction base!");
+            addLog("PRISON BREAK", "Player successfully escaped the slave camp and founded a new faction base.");
+        }
+
+        // Diplomacy Logic
+        function selectFaction(factionKey) {
+            gameState.selectedFaction = factionKey;
+            const nameEl = document.getElementById('diplomacy-faction-name');
+            const dialogEl = document.getElementById('diplomacy-dialog');
+
+            if(factionKey === 'conquistadores') {
+                nameEl.innerText = "THE CONQUISTADORES (EMISSARY)";
+                dialogEl.innerText = `"Submit to our expansion or face total annihilation. We don't negotiate with scavengers."`;
+            } else if(factionKey === 'slaves') {
+                nameEl.innerText = "ELITE SLAVE MILITIA (COMMANDER)";
+                dialogEl.innerText = `"You escaped our camp once. Consider yourself lucky. Pay toll or stay out of our territory."`;
+            } else if(factionKey === 'bunker') {
+                nameEl.innerText = "TECH BUNKER DESERTERS (REPRESENTATIVE)";
+                dialogEl.innerText = `"Greetings, friend. We have advanced weapon schematics if you have clean scrap to trade."`;
+            } else if(factionKey === 'highway') {
+                nameEl.innerText = "HIGHWAY LORDS (MOTORIST LEADER)";
+                dialogEl.innerText = `"Got fuel? Pay the bridge toll or our technicals will turn your convoy into scrap."`;
+            }
+        }
+
+        function executeDiplomacyAction(actionType) {
+            if(actionType === 'trade') {
+                gameState.scrap -= 50;
+                gameState.food += 30;
+                updateResources();
+                triggerAlertModal("TRADE COMPLETED", "Exchanged 50 Scrap for 30 Rations at the neutral hub.");
+            } else if(actionType === 'pact') {
+                triggerAlertModal("PACT SIGNED", "Non-aggression pact established with faction for 15 days.");
+                addLog("DIPLOMACY", `Signed non-aggression pact with ${gameState.selectedFaction}.`);
+            } else if(actionType === 'bribe') {
+                gameState.scrap -= 100;
+                updateResources();
+                triggerAlertModal("BRIBE ACCEPTED", "Warlord accepted tribute. Hostility reduced.");
+            }
+        }
+
+        // Intel & Complot Logic
+        function executeComplot(type) {
+            const resEl = document.getElementById('complot-result');
+            if(type === 'proxy') {
+                resEl.innerText = "Proxy war triggered! Highway Lords ambushed Conquistador supply convoy.";
+                addLog("PROXY WAR", "Highway Lords successfully ambushed Conquistadores based on player intelligence.");
+            } else {
+                resEl.innerText = "Coup successful! Assassin eliminated slave camp warlord. Base assimilated!";
+                addLog("COUP D'ÉTAT", "Elite spy assassinated Slave Warlord and usurped control of the camp.");
+            }
+            triggerAlertModal("OPERATION SUCCESSFUL", "Covert operation executed with maximum efficiency.");
+        }
+
+        function updateResources() {
+            document.getElementById('res-scrap').innerText = gameState.scrap;
+            document.getElementById('res-fuel').innerText = gameState.fuel + 'L';
+            document.getElementById('res-food').innerText = gameState.food;
+            document.getElementById('res-troops').innerText = gameState.troops;
+        }
+
+        function addLog(category, text) {
+            const logContainer = document.getElementById('theater-log');
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const item = document.createElement('div');
+            item.className = "bg-tactical-900 p-2.5 rounded border border-tactical-700 animate-pulse";
+            item.innerHTML = `<span class="text-emerald-400 block text-[10px]">${time} - ${category}</span><span class="text-slate-300">${text}</span>`;
+            logContainer.prepend(item);
+        }
+
+        // Initialize default map view
+        window.onload = function() {
+            selectMapNode('player');
+        };
+    </script>
+</body>
+</html>

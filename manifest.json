@@ -1,0 +1,20 @@
+{
+  "id": "com.proyecto66.assistant",
+  "name": "Proyecto 66",
+  "short_name": "Proyecto66",
+  "description": "Asistente inteligente Yan y red de 7 bots tácticos para Android con interfaz futurista en negro y azul neón.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#030712",
+  "theme_color": "#00f0ff",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+================================================================================
+PROMPT MAESTRO & DOCUMENTACIÓN TÉCNICA: TELEGRAM GAMES HUB & PROYECTO 66
+================================================================================
+Fecha de Generación: 2026-11-02
+Ecosistema: Telegram Games Hub / Proyecto 66
+Destinatario: Comandante Max (Telegram ID: 8885707506)
+Canal Base de Datos: -1004319887458
+Canal Oficial WARTOKEN: https://t.me/WARTOKEN_Official ($WAR / $WARC)
+Red Blockchain: BEP-20 (Binance Smart Chain)
+Repositorio GitHub: Kiko0109/proyecto-66
+Servidor Cloud: https://proyecto-66.onrender.com (Render Free 24/7)
+================================================================================
+
+1. DIRECTRIZ MAESTRA DEL ECOSISTEMA (TELEGRAM GAMES HUB)
+--------------------------------------------------------------------------------
+Plataforma de videojuegos SPA (Single Page Application) moderna, profesional,
+con estética Cyber-Gaming (fondo negro obsidiana, azules y cianes de neón #00f0ff),
+totalmente adaptada a móviles Android (PWA/Capacitor), PC y Telegram Mini Apps.
+
+2. SISTEMA DE ENTRADA Y REGISTRO EN ORDEN OBLIGATORIO
+--------------------------------------------------------------------------------
+Paso 1: Pantalla de bienvenida con selector de idioma: Español, Inglés y Portugués.
+Paso 2: Presentación del Reglamento Oficial en el idioma seleccionado.
+Paso 3: Verificación de Aceptación (Aceptar y Continuar o Rechazar y Bloquear).
+Paso 4: Formulario de Registro Seguro:
+  • Nombre Completo
+  • Nombre de Usuario (@username único)
+  • Correo electrónico verificado (Gmail)
+  • Contraseña cifrada con algoritmo de derivación de claves (Argon2 / bcrypt)
+Paso 5: Verificación real de correo mediante código OTP de 6 dígitos.
+Paso 6: Autenticación de Doble Factor (2FA - TOTP) compatible con Google Authenticator.
+Paso 7: Recuperación segura de cuenta mediante enlace de un solo uso o códigos de respaldo.
+Paso 8: Creación y personalización de perfil con avatar cyberpunk.
+* Nota de Seguridad: Acceso estrictamente bloqueado al portal hasta completar todos los pasos.
+
+3. ARQUITECTURA DE SEGURIDAD Y ANTI-TRAMPAS
+--------------------------------------------------------------------------------
+• Algoritmos de Hash: Contraseñas con salt y cifrado seguro en backend.
+• Comunicaciones: Cifrado TLS 1.3 / HTTPS de extremo a extremo y WebSockets protegidos (WSS).
+• Protección de Sesión: Tokens JWT firmados con rotación periódica y HttpOnly cookies.
+• Limitación de Intentos: Rate-limiting dinámico para frenar ataques de fuerza bruta.
+• Detección de Multicuentas y Bots: Auditoría de anomalías en hardware fingerprint y latencias.
+• Panel de Moderación y Auditoría: Registro inmutable de eventos firmado por Gregoria (SEC-05).
+• Validador de Estado Autorizado: Toda moneda virtual, saldo, botín y estadísticas
+  se calculan exclusivamente en el servidor; el cliente jamás tiene autoridad directa.
+
+4. LOS TRES VIDEOJUEGOS INDEPENDIENTES CON CUENTA COMPARTIDA
+--------------------------------------------------------------------------------
+A. REALM OF LEGENDS (MMORPG de Fantasía y Comandos Estilo WoW):
+  • Personajes, razas (Humanos, Elfos de las Sombras, Golems, Orcos) y clases.
+  • Consola de comandos rápidos: /hablar, /atacar, /mazmorra, /mision, /inventario, /warc.
+  • NPCs con Inteligencia Conversacional: Goblin Morgok, Guía Kaelen, Forjador Thorgar, Archimaga Vespera.
+  • Misiones PvE, jefes de banda en mazmorras y control territorial de clanes.
+
+B. ROYAL FLUSH CASINO (Casino & Cartas con Fichas Virtuales):
+  • Póker multijugador (Texas Hold'em y Omaha), mesas en tiempo real y torneos.
+  • Dominó Cubano Clásico y Póker con dados táctico.
+  • Fichas y monedas 100% virtuales ($WARC / P66 Points) para entretenimiento y gamificación.
+  • Sin apuestas ni transacciones de dinero real no autorizado.
+
+C. COMMAND OPS (Juego Táctico Militar):
+  • Escuadrones de soldados, equipamiento balístico y clases especializadas (Asalto, Francotirador, Soporte).
+  • Vehículos de reconocimiento y drones tácticos.
+  • Misiones tácticas por objetivos en mapas urbanos e industriales.
+  • Combate multijugador por turnos e integración con torneos de clanes.
+
+5. MENÚ SUPERIOR PERMANENTE Y SISTEMA GLOBAL
+--------------------------------------------------------------------------------
+• INICIO: Acceso directo a los tres videojuegos (Realm of Legends, Royal Flush, Command Ops).
+• REFERIDOS: Enlace de invitación único, árbol de afiliados y recompensas virtuales anti-autofraude.
+• INVERSIONES VIRTUALES: Simulador de negocios y staking de WARTOKEN ficticio con cálculo de riesgo.
+• CLASIFICACIÓN: Rankings mundiales, por país, temporadas competitivas y salones de la fama.
+• JUGADORES EN LÍNEA: Contador de usuarios registrados, conectados y activos en tiempo real.
+• CLANES: Creación de alianzas, guerras de clanes, chat grupal cifrado y banco de recursos virtuales.
+• PERFIL: Nivel, estadísticas de combate, logros desbloqueados y ajustes de seguridad 2FA.
+
+6. RED DE ALMACENAMIENTO DISTRIBUIDA EN LA NUBE (1,114.5 GB)
+--------------------------------------------------------------------------------
+• Total de Espacio: 1,114.50 GB (~1.1 TB)
+• Espacio Utilizado: ~5.85 GB (0.52%)
+• Espacio Libre / Disponible: 1,108.65 GB (99.48%)
+• Nodos Conectados a Coste 0€:
+  1. TeraBox: 1,024 GB (Backups pesados y activos de videojuegos)
+  2. Hugging Face: 50 GB (Pesos neuronales e inferencia de IA Soberana)
+  3. MEGA Vault: 20 GB (Cifrado militar para credenciales)
+  4. Google Drive: 15 GB (Documentos RAG y hojas de cálculo de auditoría)
+  5. Koofr / pCloud: 20 GB (Imágenes y texturas optimizadas)
+  6. Supabase Cloud: 500 MB (Base de datos relacional y perfiles de usuario)
+     Clave pública: sb_publishable_0oY6qWHZYq9zik36ku5pmw_ZCHiruo0
+  7. Telegram Cloud CDN: Ilimitado (2 GB por archivo en canal BASE DE DATOS -1004319887458)
+• Regla de los 100 MB: Migración automática de nodo si el espacio libre baja de 100 MB.
+
+7. INTERACCIÓN POR VOZ EN VOZ ALTA Y AUTO-APRENDIZAJE
+--------------------------------------------------------------------------------
+• Lectura en Voz Alta (TTS): Respuestas en español natural con entonación táctica.
+• Conversación Manos Libres Continua: Apertura automática de micrófono al terminar la IA.
+• Regla Conversacional: Respuestas profundas y detalladas con 1 o 2 preguntas clave al final.
+• Modo Proactivo: Notificación autónoma por voz y Telegram ante eventos del mercado o de juegos.
+• Memoria Persistente de Aprendizaje: Todo diálogo se indexa en el RAG y en cloud_state.json.
+
+================================================================================
+FIN DEL DOCUMENTO MAESTRO - PROYECTO 66 / TELEGRAM GAMES HUB
+================================================================================
