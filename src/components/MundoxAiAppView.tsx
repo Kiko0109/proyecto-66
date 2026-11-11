@@ -52,7 +52,7 @@ interface HardwareProfile {
 export const MundoxAiAppView: React.FC<MundoxAiAppViewProps> = ({ onBackToApp }) => {
   // Conmutador Online (Cloud VPS) vs Offline (Android Local)
   const [isCloudOnline, setIsCloudOnline] = useState(true);
-  const [activeTab, setActiveTab] = useState<'chat' | 'hardware' | 'memory' | 'self_improve' | 'crypto_sandbox'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'hardware' | 'memory' | 'self_improve' | 'crypto_sandbox' | 'dossier'>('chat');
   const [activeAgent, setActiveAgent] = useState<AgentId>('core');
   
   // Chat State
@@ -331,6 +331,21 @@ export const MundoxAiAppView: React.FC<MundoxAiAppViewProps> = ({ onBackToApp })
           >
             <Shield className="w-3.5 h-3.5 text-rose-400" />
             <span>Escudo Financiero & Cripto</span>
+          </button>
+
+          <button
+            onClick={() => {
+              playCyberSound('click');
+              setActiveTab('dossier');
+            }}
+            className={`px-3 py-1.5 rounded-xl border transition flex items-center gap-1.5 ${
+              activeTab === 'dossier'
+                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                : 'bg-black/40 border-gray-800 text-gray-400 hover:text-white'
+            }`}
+          >
+            <FileCode className="w-3.5 h-3.5 text-emerald-400" />
+            <span>🤗 Servidor Hugging Face & Dossier</span>
           </button>
         </div>
       </nav>
@@ -788,6 +803,126 @@ export const MundoxAiAppView: React.FC<MundoxAiAppViewProps> = ({ onBackToApp })
                     {txStatus}
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PESTAÑA 6: SERVIDOR PRINCIPAL HUGGING FACE Y DOSSIER PARA LA IA */}
+        {activeTab === 'dossier' && (
+          <div className="space-y-4 font-mono">
+            {/* Tarjeta del Servidor Principal Hugging Face */}
+            <div className="bg-[#050c1e] border border-cyan-500/40 rounded-2xl p-4 shadow-xl">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center font-bold text-black shadow-md">
+                    🤗
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">SERVIDOR PRINCIPAL: HUGGING FACE SPACES</h3>
+                    <p className="text-[10px] text-gray-400">Espacio en la nube asignado para Comandante Max</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-400 text-emerald-300 font-bold">
+                    24/7 Nube Gratuita
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-rose-950 border border-rose-400 text-rose-300 font-bold">
+                    Trading Eliminado 100%
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 text-xs">
+                <div className="bg-black/50 border border-gray-800 rounded-xl p-3">
+                  <span className="text-[10px] text-gray-400 uppercase">Enlace del Servidor</span>
+                  <div className="font-bold text-cyan-300 mt-1 truncate">https://huggingface.co/max0109</div>
+                  <div className="text-[10px] text-gray-400 mt-1">Conexión directa sin bloqueo IP de Cuba</div>
+                </div>
+
+                <div className="bg-black/50 border border-gray-800 rounded-xl p-3">
+                  <span className="text-[10px] text-gray-400 uppercase">Modelos de Inferencia</span>
+                  <div className="font-bold text-emerald-300 mt-1">Meta Llama 3.2 + Qwen 2.5</div>
+                  <div className="text-[10px] text-gray-400 mt-1">Código abierto, sin pago ni límites OpenAI</div>
+                </div>
+
+                <div className="bg-black/50 border border-gray-800 rounded-xl p-3">
+                  <span className="text-[10px] text-gray-400 uppercase">Consumo Teléfono Android</span>
+                  <div className="font-bold text-amber-300 mt-1">0% CPU / 0% Batería</div>
+                  <div className="text-[10px] text-gray-400 mt-1">Todo se procesa en el servidor Hugging Face</div>
+                </div>
+              </div>
+
+              {/* Botón de Copiar Dossier */}
+              <div className="mt-4 pt-3 border-t border-gray-800 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs text-gray-300">
+                  ¿Quieres pasarle todo el proyecto a otra IA o cargarlo en Hugging Face?
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const textToCopy = `PROYECTO MUNDOX AI + DEAD LAN 50.000 KM² (GODOT 4)
+Propietario: Comandante Max / Kiko0109
+Servidor Principal: Hugging Face Spaces (https://huggingface.co/max0109)
+Móvil: Android 11 (Ligero, 0% batería en cliente)
+
+ESTADO DE AVANCE:
+1. DEAD LAN: 50.000 km² procedurales, conducción de Camioneta Hilux 4x4 (Browning .50) y Lancha rápida MK-V naval en puerto costero.
+2. LAN P2P: Servidor autoritativo local, pausa con 0 jugadores, y relevo automático por subordinado al desconectarse el host.
+3. 6 Orígenes y Misión Prólogo: Prisionero C-9, Operador Naval Delta, Conductor, Piloto C-130, Cirujano, Cazador. Misión de fuga de la celda para reclamar equipo.
+4. Gráficos: Vulkan Mobile Ultra, 4 estaciones, tormentas eléctricas y niebla.
+5. Trading: Eliminado por completo del sistema a petición del comandante.
+6. Archivo Godot 4 listo: public/DeadLan_Godot4_Project.zip`;
+                      navigator.clipboard.writeText(textToCopy);
+                      setCopiedText(true);
+                      playCyberSound('approve');
+                      setTimeout(() => setCopiedText(false), 2500);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:brightness-110 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-lg active:scale-95"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{copiedText ? '¡Dossier Copiado al Portapapeles!' : 'Copiar Dossier Completo para la IA'}</span>
+                  </button>
+
+                  <a
+                    href="/DeadLan_Godot4_Project.zip"
+                    download="DeadLan_Godot4_Project.zip"
+                    className="px-3.5 py-2 rounded-xl bg-black/60 hover:bg-black/80 border border-red-500/50 text-red-300 font-bold text-xs transition flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5 text-red-400" />
+                    <span>Descargar Godot ZIP</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Resumen Estructurado: Lo que hemos avanzado vs Lo que falta */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="bg-[#050c1e] border border-emerald-500/30 rounded-2xl p-4 shadow-xl space-y-2">
+                <h4 className="font-bold text-emerald-400 flex items-center gap-1.5 text-sm">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>LO QUE YA ESTÁ AVANZADO Y HECHO:</span>
+                </h4>
+                <ul className="space-y-1.5 text-gray-300 text-[11px] list-disc list-inside">
+                  <li><strong>50.000 km² de Mundo Abierto:</strong> Streaming procedural fluido en sectores de 2x2 km.</li>
+                  <li><strong>Conducción Terrestre & Naval:</strong> Hilux 4x4 con torreta Browning .50 y Lancha artillada MK-V en el puerto costero.</li>
+                  <li><strong>Selector de 6 Orígenes:</strong> Spawn diferenciado y misión de fuga inicial para ganar tu primer vehículo y puesto.</li>
+                  <li><strong>Red LAN Cooperativa:</strong> Sin Internet, pausa cuando no hay jugadores y el subordinado defiende tu base si te desconectas.</li>
+                  <li><strong>Juegos de Telegram & Casino 66:</strong> War of War (WoW de comando), Dominó Cubano Doble 9 (55 fichas), Póker y Ruleta.</li>
+                  <li><strong>Cero Trading:</strong> Limpieza completa del módulo y scripts de trading.</li>
+                </ul>
+              </div>
+
+              <div className="bg-[#050c1e] border border-amber-500/30 rounded-2xl p-4 shadow-xl space-y-2">
+                <h4 className="font-bold text-amber-400 flex items-center gap-1.5 text-sm">
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  <span>LO QUE FALTA EXACTAMENTE PARA JUGAR LA APK:</span>
+                </h4>
+                <ul className="space-y-1.5 text-gray-300 text-[11px] list-disc list-inside">
+                  <li><strong>Generar el archivo .apk final:</strong> Descargas el archivo <code>DeadLan_Godot4_Project.zip</code>, lo abres en <strong>Godot Engine 4.3</strong> (gratis en PC o Android) y le das a <em>Exportar Android (.apk)</em>.</li>
+                  <li><strong>Importar Modelos 3D (.glb):</strong> Si quieres que los soldados se vean estilo película ultra HD, basta con meter tus personajes favoritos en formato <code>.glb</code> en la carpeta de assets de Godot.</li>
+                  <li><strong>Conectar Hugging Face Space:</strong> Pegar el archivo <code>app.py</code> en tu Hugging Face Space para que tu IA responda en tiempo real sin gastar datos.</li>
+                </ul>
               </div>
             </div>
           </div>
