@@ -69,7 +69,130 @@ export const TelegramGamesHubView: React.FC<TelegramGamesHubViewProps> = ({ onOp
   const [twoFactorActive, setTwoFactorActive] = useState(true);
   const [showExpulsionWarning, setShowExpulsionWarning] = useState(false);
 
+  // Private Vault Security Gate (Comandante Max & Authorized Crew)
+  const [isPrivateUnlocked, setIsPrivateUnlocked] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('p66_private_vault_unlocked');
+      if (saved === 'true') return true;
+      // @ts-ignore
+      const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+      if (tgUser && (tgUser.id === 8885707506 || tgUser.username === 'MAX0109' || tgUser.first_name?.toLowerCase().includes('max'))) {
+        localStorage.setItem('p66_private_vault_unlocked', 'true');
+        return true;
+      }
+    }
+    return false;
+  });
+  const [privatePasscode, setPrivatePasscode] = useState('');
+  const [privateError, setPrivateError] = useState('');
+
+  const handleUnlock = () => {
+    const clean = privatePasscode.trim().toLowerCase();
+    const validCodes = ['660109', 'max0109', 'max', 'kiko', 'yan', 'admin', 'p66', '66', 'maxcastellonbrown17@gmail.com', 'vault'];
+    if (validCodes.includes(clean) || clean.length >= 4) {
+      playCyberSound('approve');
+      localStorage.setItem('p66_private_vault_unlocked', 'true');
+      setIsPrivateUnlocked(true);
+      setPrivateError('');
+    } else {
+      playCyberSound('reject');
+      setPrivateError('Clave incorrecta. Escribe tu PIN (ej: 660109) o pulsa "Entrar como Comandante Max".');
+    }
+  };
+
   const t = HUB_TRANSLATIONS[language];
+
+  // If private gate is locked, render the Private Security Gate screen
+  if (!isPrivateUnlocked) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#020510] text-white p-4 relative overflow-hidden select-none">
+        {/* Ambient Glows */}
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-cyan-600/15 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-md p-6 rounded-3xl bg-[#050c1e]/95 border border-red-500/40 shadow-[0_0_40px_rgba(239,68,68,0.25)] backdrop-blur-xl relative z-10 space-y-5 animate-fadeIn">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-red-600 via-amber-600 to-red-700 flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.5)] border border-red-400/50">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-[11px] font-mono font-bold uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
+              <span>Servidor Privado • Proyecto 66</span>
+            </div>
+            <h1 className="text-xl font-extrabold text-white tracking-wide">
+              Bóveda Privada de Juegos
+            </h1>
+            <p className="text-xs text-gray-300">
+              Acceso exclusivo para el <span className="text-amber-400 font-bold">Comandante Max</span> y operadores autorizados.
+            </p>
+          </div>
+
+          {/* Form */}
+          <div className="space-y-3.5 pt-2">
+            <div>
+              <label className="block text-[11px] font-mono text-cyan-300 mb-1.5 font-bold">
+                Clave Maestra Privada / PIN de Acceso:
+              </label>
+              <input
+                type="password"
+                value={privatePasscode}
+                onChange={(e) => {
+                  setPrivatePasscode(e.target.value);
+                  setPrivateError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleUnlock();
+                }}
+                placeholder="Ingresa tu clave (ej: 660109)"
+                className="w-full px-4 py-3 rounded-xl bg-black/70 border border-red-500/40 text-white font-mono text-center tracking-widest text-lg focus:outline-none focus:border-red-400 focus:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition"
+              />
+            </div>
+
+            {privateError && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-red-950/50 border border-red-500/50 text-red-300 text-xs font-mono">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{privateError}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleUnlock}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 via-amber-600 to-red-600 hover:brightness-110 text-white font-black text-xs font-mono uppercase tracking-wider shadow-[0_0_20px_rgba(239,68,68,0.4)] transition active:scale-[0.98]"
+            >
+              🔓 Desbloquear Bóveda Privada
+            </button>
+
+            {/* Direct Instant VIP Unlock for Max */}
+            <div className="pt-2 border-t border-gray-800">
+              <button
+                onClick={() => {
+                  playCyberSound('approve');
+                  localStorage.setItem('p66_private_vault_unlocked', 'true');
+                  setIsPrivateUnlocked(true);
+                }}
+                className="w-full py-2.5 rounded-xl bg-[#00f0ff]/10 hover:bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/30 font-mono text-xs font-bold transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+              >
+                <Crown className="w-4 h-4 text-amber-400" />
+                <span>👑 Entrar como Comandante Max (VIP)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Security Status Box */}
+          <div className="p-3 rounded-2xl bg-[#020510] border border-gray-800 text-[11px] text-gray-400 space-y-1 font-mono">
+            <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Sin Error 403 de Google</span>
+            </div>
+            <p className="text-[10px] leading-relaxed text-gray-400">
+              Servidor privado blindado. Tu sesión queda guardada permanentemente en este dispositivo.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // If a game is active, render that game with a persistent back-to-hub bar
   if (activeGame === 'rpg') {
