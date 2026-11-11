@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppMode } from '../types';
-import { Shield, BookOpen, Gamepad2, Skull } from 'lucide-react';
+import { Shield, BookOpen, Gamepad2, Skull, Brain } from 'lucide-react';
 
 interface AppModeSwitcherProps {
   currentApp: AppMode;
@@ -20,6 +20,13 @@ export const AppModeSwitcher: React.FC<AppModeSwitcherProps> = ({
       badge: '🧟 3D LAN',
       icon: <Skull className="w-3.5 h-3.5 text-rose-500" />,
       desc: 'Supervivencia Zombi P2P'
+    },
+    {
+      id: 'mundox',
+      label: 'MUNDOX AI',
+      badge: '🧠 Soberano',
+      icon: <Brain className="w-3.5 h-3.5 text-cyan-400" />,
+      desc: 'Asistente IA VPS & Android'
     },
     {
       id: 'juegos',
