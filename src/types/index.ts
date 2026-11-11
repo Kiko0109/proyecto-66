@@ -1,6 +1,6 @@
 export type BotId = 'yan' | 'kiko' | 'max' | 'buky' | 'gregoria' | 'yanet' | 'kuko';
 
-export type AppMode = 'control' | 'estudio' | 'juegos' | 'deadlan';
+export type AppMode = 'control' | 'estudio' | 'juegos' | 'deadlan' | 'mundox';
 
 export interface BotInfo {
   id: BotId;
