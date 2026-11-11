@@ -1,54 +1,90 @@
 {
-  "network_name": "Proyecto 66 - Colmena de Nubes",
-  "commander_status": "STANDBY",
-  "version": "2.5.0",
-  "last_backup": "2026-10-31T12:00:00Z",
-  "commander_profile": {
-    "alias": "Comandante Max",
-    "telegram_id": "8885707506",
-    "database_channel_id": "-1004319887458",
-    "account_rating": "1 level"
-  },
-  "wartoken_ecosystem": {
-    "token_name": "WARTOKEN",
-    "ticker": "$WAR / $WARC",
-    "network": "BEP-20 (BSC)",
-    "official_channel": "https://t.me/WARTOKEN_Official",
-    "games": ["War of War (WoW de comando)", "El 88", "El 66 (Casino / Dominó Cubano)"],
-    "features": ["Staking", "Liquidez", "Red de referidos"]
-  },
-  "voice_interaction": {
-    "tts_enabled": true,
-    "hands_free_mode": true,
-    "conversational_style": "Explicaciones detalladas y preguntas proactivas para mantener la conversación viva"
-  },
-  "cloud_credentials": {
-    "supabase_publishable_key": "sb_publishable_0oY6qWHZYq9zik36ku5pmw_ZCHiruo0",
-    "render_service": "srv-dbgj1qk9v7es738nji3g",
-    "huggingface_space": "maximo0109"
-  },
-  "nodes": [
+  "last_cycle": "2026-11-11T15:08:36.815796+00:00",
+  "signals": [
     {
-      "id": "github-runner",
-      "provider": "GitHub Actions",
-      "owner": "Kiko0109",
-      "status": "active",
-      "free_monthly_quota": "2000 min"
+      "symbol": "XAU/USD",
+      "name": "Oro Spot",
+      "price": 2753.65,
+      "horizon": "1h",
+      "signal": "SELL",
+      "action": "VENTA_MODERADA",
+      "confidence": 78,
+      "rsi": 58.9,
+      "macd": 14.733,
+      "entry_range": "$2753.13 - $2754.18",
+      "stop_loss": 2786.69,
+      "take_profit_1": 2720.61,
+      "take_profit_2": 2684.81,
+      "recommended_lot": "0.01 - 0.05 (Lote seguro)",
+      "timestamp": "2026-11-11 15:08 UTC"
     },
     {
-      "id": "render-primary",
-      "provider": "Render Web Service",
-      "owner": "Kiko0109",
-      "status": "online",
-      "free_monthly_quota": "750 hours"
+      "symbol": "NVDA",
+      "name": "Nvidia Corp",
+      "price": 141.86,
+      "horizon": "1h",
+      "signal": "SELL",
+      "action": "VENTA_MODERADA",
+      "confidence": 88,
+      "rsi": 54.4,
+      "macd": -0.189,
+      "entry_range": "$141.68 - $142.04",
+      "stop_loss": 143.56,
+      "take_profit_1": 140.16,
+      "take_profit_2": 138.31,
+      "recommended_lot": "0.01 - 0.05 (Lote seguro)",
+      "timestamp": "2026-11-11 15:08 UTC"
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla Inc",
+      "price": 217.92,
+      "horizon": "1h",
+      "signal": "SELL",
+      "action": "VENTA_MODERADA",
+      "confidence": 78,
+      "rsi": 57.3,
+      "macd": 0.655,
+      "entry_range": "$217.62 - $218.22",
+      "stop_loss": 220.53,
+      "take_profit_1": 215.3,
+      "take_profit_2": 212.47,
+      "recommended_lot": "0.01 - 0.05 (Lote seguro)",
+      "timestamp": "2026-11-11 15:08 UTC"
+    },
+    {
+      "symbol": "BTC/USDT",
+      "name": "Bitcoin",
+      "price": 68589.19,
+      "horizon": "1h",
+      "signal": "BUY",
+      "action": "COMPRA_MODERADA",
+      "confidence": 92,
+      "rsi": 39.4,
+      "macd": -682.888,
+      "entry_range": "$68581.69 - $68596.69",
+      "stop_loss": 67766.12,
+      "take_profit_1": 69412.26,
+      "take_profit_2": 70303.92,
+      "recommended_lot": "0.01 - 0.05 (Lote seguro)",
+      "timestamp": "2026-11-11 15:08 UTC"
     }
   ],
-  "learning_knowledge": [
-    "Instruccion Conversacional: Hablar con mas detalle y formular preguntas clave para continuar el dialogo",
-    "WARTOKEN Official: https://t.me/WARTOKEN_Official ($WARC BEP-20) para War of War y Casino 66",
-    "Comandante Max: ID 8885707506 y Canal Base de Datos -1004319887458",
-    "Oro Forex: Sídney, Tokio/SGE, Londres/LBMA Fix, Solapamiento Londres-NY, Nueva York COMEX",
-    "Bitcoin: Ciclo continuo 24/7/365, gaps de futuros en CME y apertura Wall Street",
-    "Auto-sync de estado inmutable entre nubes sin consumir bateria ni espacio local"
-  ]
+  "best_signal": {
+    "symbol": "BTC/USDT",
+    "name": "Bitcoin",
+    "price": 68589.19,
+    "horizon": "1h",
+    "signal": "BUY",
+    "action": "COMPRA_MODERADA",
+    "confidence": 92,
+    "rsi": 39.4,
+    "macd": -682.888,
+    "entry_range": "$68581.69 - $68596.69",
+    "stop_loss": 67766.12,
+    "take_profit_1": 69412.26,
+    "take_profit_2": 70303.92,
+    "recommended_lot": "0.01 - 0.05 (Lote seguro)",
+    "timestamp": "2026-11-11 15:08 UTC"
+  }
 }
