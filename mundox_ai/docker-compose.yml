@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------------------
+  # 1. Motor de Inferencia Local Ollama (Modelos Abiertos Qwen / Llama)
+  # -------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mundox-ollama-engine
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_models:/root/.ollama
+    # Descomentar para habilitar aceleración GPU NVIDIA si nvidia-smi detecta tarjeta:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=2
+
+  # -------------------------------------------------------------------------
+  # 2. Servidor de Orquestación y Memoria Persistente MUNDOX AI
+  # -------------------------------------------------------------------------
+  mundox-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.mundox
+    container_name: mundox-ai-core
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mundox_memory.db:/app/mundox_memory.db
+      - ./hardware_report.json:/app/hardware_report.json
+    environment:
+      - MUNDOX_PORT=8080
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
