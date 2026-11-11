@@ -41,11 +41,95 @@ import {
   Terminal,
   PlayCircle,
   Tent,
-  MapPin
+  MapPin,
+  Wrench,
+  Car,
+  Truck,
+  HelpCircle,
+  Gauge,
+  Layers,
+  ShieldCheck,
+  RadioTower,
+  Pause,
+  Film
 } from 'lucide-react';
 import { playCyberSound } from '../utils/speechUtils';
+import { DeadLan3DWorld, PlayerOriginId, PLAYER_ORIGINS } from './DeadLan3DWorld';
+import { DeadLanCinematicIntro } from './DeadLanCinematicIntro';
 
-type DeadLanViewMode = 'splash' | 'lobby' | 'character' | 'hierarchy' | 'bestiary' | 'weather' | 'mission' | 'camp' | 'apk_export';
+import { AppMode } from '../types';
+
+export interface DeadLanAppViewProps {
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  onExitToControl?: () => void;
+  onSwitchApp?: (app: AppMode) => void;
+}
+
+type DeadLanViewMode =
+  | 'splash'
+  | 'cinematic_story'
+  | 'open_world_3d'
+  | 'lobby'
+  | 'character'
+  | 'hierarchy'
+  | 'bestiary'
+  | 'weather'
+  | 'mission'
+  | 'outposts'
+  | 'vehicles'
+  | 'counter_intel'
+  | 'camp'
+  | 'apk_export';
+
+export type GraphicQuality = 'bajo' | 'medio' | 'alto' | 'ultra_vulkan';
+
+export const GRAPHIC_PRESETS: Record<GraphicQuality, {
+  name: string;
+  tag: string;
+  res: string;
+  fps: string;
+  shadows: string;
+  vulkan: string;
+  description: string;
+}> = {
+  bajo: {
+    name: 'Bajo (Ahorro de Batería)',
+    tag: 'BAJO 30 FPS',
+    res: '720p Dinámico',
+    fps: '30 FPS Fijos',
+    shadows: 'Desactivadas',
+    vulkan: 'OpenGL ES / Vulkan Básico',
+    description: 'Para móviles antiguos o gama de entrada. Mínimo consumo térmico y de batería.'
+  },
+  medio: {
+    name: 'Medio (Equilibrado)',
+    tag: 'MEDIO 60 FPS',
+    res: '1080p Nativo',
+    fps: '60 FPS Estables',
+    shadows: 'Sombras de punto suaves',
+    vulkan: 'Vulkan Mobile Standard',
+    description: 'Experiencia fluida a 60 FPS con texturas comprimidas y físicas balanceadas.'
+  },
+  alto: {
+    name: 'Alto (PBR Avanzado)',
+    tag: 'ALTO PBR',
+    res: '1080p+ Full HD',
+    fps: '60 FPS',
+    shadows: 'Sombras dinámicas cascada',
+    vulkan: 'Vulkan Mobile PBR',
+    description: 'Materiales PBR realistas, reflejos de agua de lluvia y niebla de profundidad.'
+  },
+  ultra_vulkan: {
+    name: 'Ultra HD (Vulkan Mobile Nativo)',
+    tag: 'ULTRA VULKAN',
+    res: '1440p / 4K Dinámico',
+    fps: '60-120 FPS AMOLED',
+    shadows: 'Sombras de contacto + Oclusión ambiental (SSAO)',
+    vulkan: 'Vulkan Mobile Ray-Traced Audio & PBR Ultra',
+    description: 'Máximo detalle visual: niebla volumétrica, relámpagos estroboscópicos y físicas balísticas desmembrables.'
+  }
+};
 
 type SeasonType = 'otoño' | 'invierno' | 'verano' | 'primavera';
 type WeatherCondition = 'lluvia_torrencial' | 'tormenta_electrica' | 'ventisca_nieve' | 'ola_calor' | 'niebla_acida';
@@ -69,11 +153,22 @@ interface TacticalLog {
   time: string;
 }
 
-export const DeadLanAppView: React.FC = () => {
+export const DeadLanAppView: React.FC<DeadLanAppViewProps> = ({
+  isFullscreen = true,
+  onToggleFullscreen,
+  onExitToControl,
+  onSwitchApp
+}) => {
   const [viewMode, setViewMode] = useState<DeadLanViewMode>('splash');
   const [loadProgress, setLoadProgress] = useState(0);
   const [loadStepText, setLoadStepText] = useState('Inicializando motor Vulkan Mobile PBR...');
   const [isReadyToEnter, setIsReadyToEnter] = useState(false);
+
+  // Selector Gráfico en Tiempo Real
+  const [graphicQuality, setGraphicQuality] = useState<GraphicQuality>('ultra_vulkan');
+  const [isGraphicsModalOpen, setIsGraphicsModalOpen] = useState(false);
+  const [isChromeVsApkModalOpen, setIsChromeVsApkModalOpen] = useState(false);
+  const [coverFraming, setCoverFraming] = useState<'centered' | 'panorama'>('centered');
 
   // Weather & Seasons System State
   const [activeSeason, setActiveSeason] = useState<SeasonType>('otoño');
@@ -89,12 +184,232 @@ export const DeadLanAppView: React.FC = () => {
   const [hostIp, setHostIp] = useState('192.168.43.1');
   const [targetIp, setTargetIp] = useState('192.168.43.1');
   const [isScanning, setIsScanning] = useState(false);
+  const [selectedOrigin, setSelectedOrigin] = useState<PlayerOriginId>('prisoner_c9');
   const [connectedPlayers, setConnectedPlayers] = useState([
-    { id: 'p1', name: 'Comandante Max (Host)', ping: '1 ms', status: 'Listo', role: 'Líder de Fuga' },
-    { id: 'p2', name: 'Kiko_Táctico', ping: '4 ms', status: 'Listo', role: 'Ingeniero Recluso' },
-    { id: 'p3', name: 'Operador_Sombra', ping: '3 ms', status: 'Esperando', role: 'Mendigo Explorador' }
+    {
+      id: 'p1',
+      name: 'Comandante Max (Host)',
+      ping: '1 ms',
+      status: 'Listo',
+      role: 'Recluso Fugitivo C-9',
+      sector: 'Sector A-1: Celdas Subterráneas',
+      icon: '⛓️',
+      spawn: 'Prisión de Máxima Seguridad'
+    },
+    {
+      id: 'p2',
+      name: 'Kiko_Táctico (Cliente 1)',
+      ping: '4 ms',
+      status: 'Listo',
+      role: 'Operador Naval Delta',
+      sector: 'Sector C-4: Muelle Militar & Puerto Este',
+      icon: '🚤',
+      spawn: 'Puerto Naval Costero'
+    },
+    {
+      id: 'p3',
+      name: 'Operador_Sombra (Cliente 2)',
+      ping: '3 ms',
+      status: 'Esperando',
+      role: 'Conductor del Gremio',
+      sector: 'Sector B-1: Cruce de Puesto Fronterizo',
+      icon: '🛻',
+      spawn: 'Puesto Avanzado Fronterizo'
+    },
+    {
+      id: 'p4',
+      name: 'Valkiria_Sky (Cliente 3)',
+      ping: '6 ms',
+      status: 'Conectado',
+      role: 'Piloto Caído C-130',
+      sector: 'Sector N-2: Pista Aeródromo',
+      icon: '🚁',
+      spawn: 'Hangar de Emergencia'
+    }
   ]);
   const [gameDifficulty, setGameDifficulty] = useState<'supervivencia' | 'pesadilla' | 'brutal'>('pesadilla');
+  const [isServerPaused, setIsServerPaused] = useState(false);
+  const [autoPauseEnabled, setAutoPauseEnabled] = useState(true);
+  const [subordinateTakeoverEnabled, setSubordinateTakeoverEnabled] = useState(true);
+
+  // Célula Aliada de Contra-Espionaje (Lugarteniente Vance)
+  const [commanderProtectionActive, setCommanderProtectionActive] = useState(true);
+  const [counterIntelReports, setCounterIntelReports] = useState([
+    {
+      id: 'ci-1',
+      title: 'Espías Falsos Refugiados Detectados en el Perímetro',
+      faction: 'Los Susurradores',
+      desc: '2 espías cubiertos con harapos fingieron escapar de la celda C-10. Vance detectó que portan dagas de cerámica ocultas en las vendas de las piernas con veneno paralizante.',
+      action: 'Neutralizados en silencio antes de acercarse al camastro del líder.',
+      resolved: false
+    },
+    {
+      id: 'ci-2',
+      title: 'Frecuencia Militar 142.85 MHz Interceptada',
+      faction: 'Milicia Esclavista de Élite',
+      desc: 'Transmisión enemiga: "Convoy pesado saliendo del aeródromo en 40 minutos con cargamento de munición y repuestos hacia el Puente Sur".',
+      action: 'Coordenadas transmitidas al Sargento Morales para preparar emboscada.',
+      resolved: false
+    },
+    {
+      id: 'ci-3',
+      title: 'Desinformación Táctica: Mapa Falso Plantado',
+      faction: 'Los Desolladores Salvajes',
+      desc: 'Vance colocó un mapa falso en el cadáver de un vigía. Marca el búnker vacío de la cantera como depósito de comida, desviando a 20 saqueadores directamente hacia un nido de Lickers.',
+      action: 'Señuelo activo: Desolladores emboscados por criaturas B.O.W.',
+      resolved: true
+    }
+  ]);
+
+  // Puestos de Avanzada Militares Conquistables (Estilo Far Cry)
+  const [outposts, setOutposts] = useState([
+    {
+      id: 'out-1',
+      name: 'Puesto Radar Delta (Far Cry Style)',
+      sector: 'Sector C-2 // Colinas del Norte',
+      status: 'hostil' as 'hostil' | 'conquistado',
+      garrison: 14,
+      alarmsCount: 2,
+      alarmsDisabled: false,
+      lickerCagePresent: true,
+      lickerReleased: false,
+      heavyMortars: 2,
+      fogCleared: false,
+      reward: '+50 Chatarra, +40 Balas, Viaje Rápido y Torreta Automática'
+    },
+    {
+      id: 'out-2',
+      name: 'Torre de Telecomunicaciones Militar (40m)',
+      sector: 'Sector D-4 // Cumbres de Niebla',
+      status: 'hostil' as 'hostil' | 'conquistado',
+      garrison: 8,
+      alarmsCount: 1,
+      alarmsDisabled: false,
+      lickerCagePresent: false,
+      lickerReleased: false,
+      heavyMortars: 0,
+      fogCleared: false,
+      reward: 'Despeja 500 km² de niebla del mapa y detecta rutas de convoys'
+    },
+    {
+      id: 'out-3',
+      name: 'Puesto de Control Puente Roto',
+      sector: 'Sector A-1 // Paso del Río Seco',
+      status: 'conquistado' as 'hostil' | 'conquistado',
+      garrison: 0,
+      alarmsCount: 0,
+      alarmsDisabled: true,
+      lickerCagePresent: false,
+      lickerReleased: false,
+      heavyMortars: 1,
+      fogCleared: true,
+      reward: 'Ruta despejada para vehículos pesados y transporte de madera'
+    }
+  ]);
+
+  // Misiones Spec Ops Tácticas (Call of Duty / Delta Force / Comandos)
+  const [specOpsMissions, setSpecOpsMissions] = useState([
+    {
+      id: 'so-1',
+      title: 'Operación Viento Negro (Delta Force / Comandos)',
+      type: 'Sigilo e Infiltración Nocturna',
+      lore: 'Infiltrarse en el centro de mando de la base aérea bajo lluvia ácida. Silenciador obligatorio. Sabotear generador diésel y extraer microchip de satélite militar.',
+      difficulty: 'Élite',
+      reward: '+1 Fusil Silenciado M4A1, +2 Visores Nocturnos NVG, +45 Balas 5.56mm',
+      status: 'disponible' as 'disponible' | 'completada'
+    },
+    {
+      id: 'so-2',
+      title: 'Emboscada de Convoy en Desfiladero (Call of Duty)',
+      type: 'Asalto Explosivo & Fuego Pesado',
+      lore: 'Plantar cargas de C4 en el puente del desfiladero rocoso. Al paso del blindado líder, detonar y neutralizar a los 18 soldados de escolta con fuego cruzado.',
+      difficulty: 'Pesadilla',
+      reward: '+1 Camioneta Hilux con Browning .50, +60 Cartuchos Calibre .50, +4 Cargas C4',
+      status: 'disponible' as 'disponible' | 'completada'
+    },
+    {
+      id: 'so-3',
+      title: 'Extracción de Científico Biólogo (Comandos)',
+      type: 'Rescate de Rehenes en Laboratorio Subterráneo',
+      lore: 'El Dr. Chen posee la fórmula del suero neutralizador de cepas B.O.W. Forzar cerraduras de titanio, evitar llamar la atención del Licker en el conducto y evacuar.',
+      difficulty: 'Extrema',
+      reward: '+1 Suero Antiviral B.O.W., +3 Botiquines Militares, Doctor asignado a la enfermería',
+      status: 'disponible' as 'disponible' | 'completada'
+    }
+  ]);
+
+  // Rachas y Apoyo Táctico (Killstreaks)
+  const [killstreaks, setKillstreaks] = useState({
+    uavAcoustic: true,
+    mortarBarrageCount: 3,
+    tacticalSupplyDropCount: 2
+  });
+
+  // Taller Mecánico & Vehículos del Páramo de 10,000 km²
+  const [vehicles, setVehicles] = useState([
+    {
+      id: 'veh-buggy',
+      name: 'Buggy Táctico Ligero 4x4',
+      type: 'Exploración Rápida & Torres Far Cry',
+      condition: 'Averiado (Requiere Batería 12V + 2 Bujías + 15L Gasolina)',
+      speed: '95 km/h',
+      fuel: 15,
+      maxFuel: 40,
+      fixed: false,
+      armored: false,
+      capacity: '2 Tripulantes',
+      needs: { sparkPlugs: 2, batteries: 1, fuel: 15, tires: 0, steel: 0 }
+    },
+    {
+      id: 'veh-pickup',
+      name: 'Camioneta Técnica Hilux Blindada (Browning .50)',
+      type: 'Vehículo de Combate & Supresión de Hordas',
+      condition: 'Averiado (Requiere 4 Neumáticos + Radiador + 30L Diésel)',
+      speed: '75 km/h',
+      fuel: 20,
+      maxFuel: 80,
+      fixed: false,
+      armored: true,
+      capacity: '5 Tripulantes + Artillero de Torreta',
+      needs: { sparkPlugs: 0, batteries: 1, fuel: 30, tires: 4, steel: 35 }
+    },
+    {
+      id: 'veh-ural',
+      name: 'Camión Militar Pesado 6x6 (Ural Fortificado)',
+      type: 'Transporte de Tropas (14 Soldados) & Carga Pesada',
+      condition: 'Parado en cuartel militar caído (Requiere 2 Baterías 24V + 50 Acero)',
+      speed: '60 km/h',
+      fuel: 45,
+      maxFuel: 150,
+      fixed: false,
+      armored: true,
+      capacity: '14 Soldados + 500 uds Materiales',
+      needs: { sparkPlugs: 4, batteries: 2, fuel: 50, tires: 2, steel: 50 }
+    }
+  ]);
+
+  // Inventario de Materiales de Construcción & Mecánica (The Forest & State of Decay)
+  const [mechanicInventory, setMechanicInventory] = useState({
+    sparkPlugs: 5,
+    batteries12V: 3,
+    batteries24V: 2,
+    tires: 8,
+    fuelLiters: 95,
+    steelPlates: 65,
+    cement: 80,
+    woodLogs: 140, // Tala de árboles estilo The Forest
+    electronicComponents: 45
+  });
+
+  // Estadísticas de Comunidad (State of Decay / The Walking Dead)
+  const [communityStats, setCommunityStats] = useState({
+    morale: 95, // %
+    bedsAvailable: 24,
+    bedsOccupied: 18,
+    infectionRisk: '0% (Bajo Control)',
+    dailyFoodNeed: 38,
+    dailyWaterNeed: 42
+  });
 
   // Character Customization State (Mendigo Recluso Inicial)
   const [characterConfig, setCharacterConfig] = useState({
@@ -193,7 +508,9 @@ export const DeadLanAppView: React.FC = () => {
   const [escapeOutcome, setEscapeOutcome] = useState<'playing' | 'escaped' | 'captured'>('playing');
 
   // Godot Export Code Viewer State
-  const [selectedApkFile, setSelectedApkFile] = useState<'project_godot' | 'network_manager' | 'android_manifest' | 'quick_start'>('project_godot');
+  const [selectedApkFile, setSelectedApkFile] = useState<
+    'project_godot' | 'network_manager' | 'outpost_manager' | 'vehicle_manager' | 'counter_spy_manager' | 'android_manifest' | 'quick_start'
+  >('project_godot');
   const [copiedFile, setCopiedFile] = useState<string | null>(null);
 
   // Primer Campamento Refugio y Sistema de Asedios de las 25 Facciones
@@ -373,6 +690,22 @@ export const DeadLanAppView: React.FC = () => {
       mutationLevel: 'Nivel 3 (Depredador Subterráneo)'
     },
     {
+      name: 'Némesis Alpha (Mutación Parasitaria)',
+      danger: 'CATASTRÓFICO // ÉLITE',
+      lore: 'B.O.W. implacable de 2.90m con parásito NE-Alpha que controla su sistema nervioso central. Despliega un tentáculo orgánico de 6 metros para asfixiar o lanzar a los jugadores contra rocas. Porta un lanzacohetes artesanal cargado con 2 proyectiles.',
+      weakness: 'Fuego concentrado en el parásito dorsal expuesto cuando entra en estado de aturdimiento tras una ráfaga de escopeta.',
+      audioReaction: 'Rastrea firmas de calor y motores de vehículos; destruye camionetas con embestidas.',
+      mutationLevel: 'Nivel 5+ (Asesino de Escuadrones)'
+    },
+    {
+      name: 'Cerberus K-9 (Doberman Militar Infectado)',
+      danger: 'ALTO - RÁPIDO & FURTIVO',
+      lore: 'Perros de asalto militares infectados con el virus B.O.W. Cazan en jaurías de 3 a 5 individuos. Poseen una velocidad punta de 55 km/h, esquivan disparos en zigzag y atacan a la yugular del mendigo desarmado.',
+      weakness: 'Escopetazos en abanico o tubos de hierro balanceados con timing exacto en pleno salto.',
+      audioReaction: 'Atraídos por silbatos, chirrido de frenos y olor a carne fresca.',
+      mutationLevel: 'Nivel 2 (Perro de Presa)'
+    },
+    {
       name: 'Hordas Desmembrables con Daño Localizado',
       danger: 'MEDIO - ABRUMADOR EN MASA',
       lore: 'Infectados urbanos que vagan en grandes grupos por el mapa de 10,000 km². Cuentan con físicas de impacto balístico: si les disparas a las piernas caen y gatean hacia ti; si disparas a los brazos pierden capacidad de agarre.',
@@ -472,26 +805,128 @@ export const DeadLanAppView: React.FC = () => {
       {/* PANTALLA 1: PORTADA CINEMÁTICA ANIMADA CON BARRA DE CARGA */}
       {viewMode === 'splash' && (
         <div className="relative min-h-screen w-full flex flex-col justify-between overflow-hidden bg-black touch-manipulation">
-          {/* Cover Art Background con respiración animada */}
+          {/* Cover Art Background con encuadre centrado en el protagonista mendigo para móvil */}
           <div
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105 animate-pulse"
+            className="absolute inset-0 bg-cover transition-all duration-700 scale-105"
             style={{
               backgroundImage: `url('/assets/images/dead_lan_cover.jpg')`,
-              animationDuration: '6s'
+              backgroundPosition: coverFraming === 'centered' ? '28% 25%' : 'center center'
             }}
           />
 
           {/* Soft Edge Gradient - Center and top stay completely clean and visible */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#02050c]/95 via-transparent to-black/20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#02050c]/95 via-transparent to-black/30 pointer-events-none" />
 
           {/* Foco de Torre de Vigilancia oscilando */}
           <div className="absolute -top-10 right-1/4 w-96 h-96 bg-amber-400/5 rounded-full blur-3xl transform rotate-45 animate-pulse pointer-events-none" />
 
-          {/* Espacio Superior y Central Completamente Limpio (Sin insignias ni textos sobre el arte) */}
+          {/* BARRA SUPERIOR FLOTANTE ELEGANTE: 100% LIMPIA, PEGADA AL BORDE SUPERIOR */}
+          <div className="relative z-20 px-3 pt-3 flex items-center justify-between text-xs font-mono">
+            {/* Volver a Proyecto 66 si el usuario lo desea */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                if (onExitToControl) onExitToControl();
+                else if (onToggleFullscreen) onToggleFullscreen?.();
+              }}
+              className="px-2.5 py-1.5 rounded-xl bg-black/70 hover:bg-black/95 border border-cyan-500/40 text-cyan-400 backdrop-blur-md transition flex items-center gap-1.5 shadow-lg active:scale-95 text-[11px]"
+            >
+              <span>← Proyecto 66</span>
+            </button>
+
+            {/* Controles: Encuadre + Calidad Gráfica + Explicación Chrome vs APK + Pantalla Completa */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  playCyberSound('click');
+                  setCoverFraming((prev) => (prev === 'centered' ? 'panorama' : 'centered'));
+                }}
+                className={`px-2.5 py-1.5 rounded-xl border backdrop-blur-md transition flex items-center gap-1 shadow-lg active:scale-95 text-[11px] ${
+                  coverFraming === 'centered'
+                    ? 'bg-amber-500/30 border-amber-400 text-amber-200'
+                    : 'bg-black/70 border-gray-700 text-gray-300'
+                }`}
+                title="Ajustar encuadre: centrar al protagonista en la pantalla"
+              >
+                <Crosshair className="w-3.5 h-3.5 text-amber-400" />
+                <span className="font-bold">{coverFraming === 'centered' ? '🎯 Centrado' : '🌄 Panorámica'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  playCyberSound('click');
+                  setIsGraphicsModalOpen(true);
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-black/70 hover:bg-black/95 border border-red-500/50 text-red-300 backdrop-blur-md transition flex items-center gap-1 shadow-lg active:scale-95 text-[11px]"
+                title="Configuración de gráficos en tiempo real"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span className="font-bold">{GRAPHIC_PRESETS[graphicQuality].tag}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  playCyberSound('click');
+                  setIsChromeVsApkModalOpen(true);
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-black/70 hover:bg-black/95 border border-amber-500/50 text-amber-300 backdrop-blur-md transition flex items-center gap-1 shadow-lg active:scale-95 text-[11px]"
+                title="¿Cómo funciona en Chrome vs en una APK Nativa?"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Chrome vs APK</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  playCyberSound('click');
+                  if (typeof document !== 'undefined') {
+                    if (document.fullscreenElement) {
+                      document.exitFullscreen?.().catch(() => {});
+                    } else {
+                      document.documentElement.requestFullscreen?.().catch(() => {});
+                    }
+                  }
+                }}
+                className="p-1.5 rounded-xl bg-black/70 hover:bg-black/95 border border-gray-700 text-gray-200 backdrop-blur-md transition flex items-center justify-center shadow-lg active:scale-95"
+                title="Pantalla Completa Web (Oculta barra de navegación de Chrome)"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Espacio Central Completamente Limpio (El arte de portada y el mendigo recluso quedan 100% visibles) */}
           <div className="flex-1" />
 
           {/* Bottom Loading Bar Container para Móvil */}
-          <div className="relative z-10 p-5 sm:p-6 max-w-xl mx-auto w-full space-y-3">
+          <div className="relative z-10 p-4 sm:p-6 max-w-xl mx-auto w-full space-y-2.5">
+            {/* Selector Rápido de Calidad Gráfica */}
+            <div className="flex items-center justify-between text-[10px] font-mono pb-1 border-b border-gray-800/80">
+              <span className="text-gray-400 flex items-center gap-1">
+                <Gauge className="w-3 h-3 text-red-400" />
+                <span>MOTOR GRÁFICO:</span>
+              </span>
+              <div className="flex items-center gap-1">
+                {(['bajo', 'medio', 'alto', 'ultra_vulkan'] as GraphicQuality[]).map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => {
+                      playCyberSound('switch');
+                      setGraphicQuality(q);
+                      showTacticalToast('GRÁFICOS ACTUALIZADOS', `${GRAPHIC_PRESETS[q].name} (${GRAPHIC_PRESETS[q].fps}) activado.`, 'info');
+                    }}
+                    className={`px-2 py-0.5 rounded-lg text-[9px] uppercase font-bold transition ${
+                      graphicQuality === q
+                        ? 'bg-red-600 text-white shadow-[0_0_8px_rgba(239,68,68,0.6)]'
+                        : 'bg-black/60 text-gray-400 hover:text-white border border-gray-800'
+                    }`}
+                  >
+                    {q === 'ultra_vulkan' ? 'Ultra Vulkan' : q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between text-xs font-mono">
               <span className="text-red-400 font-bold flex items-center gap-2 truncate max-w-[80%]">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-ping shrink-0" />
@@ -508,8 +943,46 @@ export const DeadLanAppView: React.FC = () => {
               />
             </div>
 
-            {/* Enter Button Grande y Cómodo para Pulgar Móvil */}
-            <div className="pt-1">
+            {/* Botones de Entrada: 1. Historia Cinemática 2. Mundo 3D (Caminar/Far Cry) y 3. Lobby LAN */}
+            <div className="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono">
+              <button
+                disabled={!isReadyToEnter}
+                onClick={() => {
+                  playCyberSound('approve');
+                  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                    try { navigator.vibrate(50); } catch {}
+                  }
+                  setViewMode('cinematic_story');
+                }}
+                className={`py-3 px-2 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 shadow-2xl active:scale-95 ${
+                  isReadyToEnter
+                    ? 'bg-gradient-to-r from-purple-700 to-indigo-600 text-white hover:brightness-110 shadow-[0_0_20px_rgba(147,51,234,0.5)] border border-purple-400'
+                    : 'bg-gray-900 text-gray-500 border border-gray-800 cursor-not-allowed opacity-60'
+                }`}
+              >
+                <Film className="w-4 h-4 text-purple-200" />
+                <span>🎬 HISTORIA E INTRODUCCIÓN</span>
+              </button>
+
+              <button
+                disabled={!isReadyToEnter}
+                onClick={() => {
+                  playCyberSound('approve');
+                  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                    try { navigator.vibrate(50); } catch {}
+                  }
+                  setViewMode('open_world_3d');
+                }}
+                className={`py-3 px-2 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 shadow-2xl active:scale-95 ${
+                  isReadyToEnter
+                    ? 'bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 text-white hover:brightness-110 shadow-[0_0_20px_rgba(6,182,212,0.6)] border border-cyan-300'
+                    : 'bg-gray-900 text-gray-500 border border-gray-800 cursor-not-allowed opacity-60'
+                }`}
+              >
+                <Crosshair className="w-4 h-4 text-cyan-200" />
+                <span>🎮 MUNDO 3D (FAR CRY)</span>
+              </button>
+
               <button
                 disabled={!isReadyToEnter}
                 onClick={() => {
@@ -519,14 +992,14 @@ export const DeadLanAppView: React.FC = () => {
                   }
                   setViewMode('lobby');
                 }}
-                className={`w-full py-4 rounded-2xl font-mono font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-2xl active:scale-95 ${
+                className={`py-3 px-2 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 shadow-2xl active:scale-95 ${
                   isReadyToEnter
-                    ? 'bg-gradient-to-r from-red-600 via-amber-600 to-red-600 text-white hover:brightness-110 shadow-[0_0_30px_rgba(239,68,68,0.5)]'
+                    ? 'bg-gradient-to-r from-red-600 via-amber-600 to-red-600 text-white hover:brightness-110 shadow-[0_0_20px_rgba(239,68,68,0.5)] border border-amber-500/50'
                     : 'bg-gray-900 text-gray-500 border border-gray-800 cursor-not-allowed opacity-60'
                 }`}
               >
                 <Play className="w-4 h-4 fill-current" />
-                <span>{isReadyToEnter ? 'ENTRAR AL LOBBY TÁCTICO LAN' : 'COMPILANDO RECURSOS...'}</span>
+                <span>LOBBY LAN</span>
               </button>
             </div>
           </div>
@@ -536,21 +1009,58 @@ export const DeadLanAppView: React.FC = () => {
       {/* CABECERA DE NAVEGACIÓN ENTRE MÓDULOS DE DEAD LAN */}
       {viewMode !== 'splash' && (
         <div className="bg-[#050c1e] border-b border-red-500/30 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shadow-xl sticky top-0 z-30">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-red-950 border border-red-500/50 flex items-center justify-center">
               <Skull className="w-4 h-4 text-red-400" />
             </div>
             <div>
-              <h2 className="text-xs font-mono font-bold text-white tracking-widest">DEAD LAN // VULKAN 3D</h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-xs font-mono font-bold text-white tracking-widest">DEAD LAN</h2>
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 font-mono font-bold">
+                  {GRAPHIC_PRESETS[graphicQuality].tag}
+                </span>
+              </div>
               <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {WEATHER_PRESETS[activeWeather].label.split(' ')[0]} ({ambientTemp}°C)
+                {WEATHER_PRESETS[activeWeather].label.split(' ')[0]} ({ambientTemp}°C) • {isServerPaused ? 'PAUSADO (0 Jugadores)' : 'LAN ACTIVA'}
               </span>
             </div>
           </div>
 
-          {/* Navigation Tabs Optimizadas para Móvil */}
+          {/* Navigation Tabs Optimizadas para Móvil con Scroll Horizontal */}
           <div className="flex items-center gap-1 font-mono text-xs overflow-x-auto max-w-full pb-0.5">
+            {/* Historia Cinemática Introductoria */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setViewMode('cinematic_story');
+              }}
+              className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                viewMode === 'cinematic_story'
+                  ? 'bg-purple-600 text-white font-black shadow-[0_0_15px_rgba(147,51,234,0.8)] border border-purple-300'
+                  : 'bg-purple-950/70 text-purple-300 hover:text-white border border-purple-500/50'
+              }`}
+            >
+              <Film className="w-3.5 h-3.5 text-purple-300" />
+              <span>🎬 Historia</span>
+            </button>
+
+            {/* Modo Mundo Abierto 3D Caminar / Infiltración Estilo Far Cry */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setViewMode('open_world_3d');
+              }}
+              className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                viewMode === 'open_world_3d'
+                  ? 'bg-cyan-600 text-white font-black shadow-[0_0_15px_rgba(6,182,212,0.8)] border border-cyan-300'
+                  : 'bg-cyan-950/70 text-cyan-300 hover:text-white border border-cyan-500/50'
+              }`}
+            >
+              <Crosshair className="w-3.5 h-3.5 text-cyan-300" />
+              <span>🎮 Mundo 3D (Far Cry)</span>
+            </button>
+
             <button
               onClick={() => {
                 playCyberSound('click');
@@ -566,19 +1076,68 @@ export const DeadLanAppView: React.FC = () => {
               <span>Lobby LAN</span>
             </button>
 
+            {/* Célula Aliada de Contra-Espionaje Vance */}
             <button
               onClick={() => {
                 playCyberSound('click');
-                setViewMode('weather');
+                setViewMode('counter_intel');
               }}
               className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
-                viewMode === 'weather'
+                viewMode === 'counter_intel'
+                  ? 'bg-purple-600 text-white font-bold shadow-[0_0_10px_rgba(147,51,234,0.5)]'
+                  : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+              <span>Contra-Espionaje</span>
+            </button>
+
+            {/* Puestos Militares & Misiones (Far Cry / CoD / Delta Force / Comandos) */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setViewMode('outposts');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                viewMode === 'outposts'
+                  ? 'bg-emerald-600 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                  : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <RadioTower className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Puestos & Misiones</span>
+            </button>
+
+            {/* Taller Mecánico, Reparación de Vehículos & Fortalezas (The Forest / State of Decay) */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setViewMode('vehicles');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                viewMode === 'vehicles'
                   ? 'bg-amber-600 text-white font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
                   : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
               }`}
             >
-              <CloudLightning className="w-3.5 h-3.5 text-amber-300" />
-              <span>Clima & IA</span>
+              <Truck className="w-3.5 h-3.5 text-amber-300" />
+              <span>Taller & Fortalezas</span>
+            </button>
+
+            {/* Primer Campamento Refugio & Sistema de Asedios de las 25 Facciones */}
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setViewMode('camp');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                viewMode === 'camp'
+                  ? 'bg-rose-600 text-white font-bold shadow-[0_0_10px_rgba(225,29,72,0.5)]'
+                  : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <Tent className="w-3.5 h-3.5 text-rose-300" />
+              <span>Campamento & Asedios</span>
             </button>
 
             <button
@@ -596,7 +1155,6 @@ export const DeadLanAppView: React.FC = () => {
               <span>Mendigo</span>
             </button>
 
-            {/* Módulo Independiente de Jerarquía (No va junto con el editor) */}
             <button
               onClick={() => {
                 playCyberSound('click');
@@ -619,12 +1177,27 @@ export const DeadLanAppView: React.FC = () => {
               }}
               className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
                 viewMode === 'bestiary'
-                  ? 'bg-purple-600 text-white font-bold shadow-[0_0_10px_rgba(147,51,234,0.5)]'
+                  ? 'bg-violet-600 text-white font-bold shadow-[0_0_10px_rgba(124,58,237,0.5)]'
                   : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
               }`}
             >
               <Dna className="w-3.5 h-3.5" />
               <span>B.O.W.</span>
+            </button>
+
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setViewMode('weather');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
+                viewMode === 'weather'
+                  ? 'bg-amber-600 text-white font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                  : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <CloudLightning className="w-3.5 h-3.5 text-amber-300" />
+              <span>Clima</span>
             </button>
 
             {/* Misión Táctica de la Gran Fuga Celda C-9 */}
@@ -635,28 +1208,12 @@ export const DeadLanAppView: React.FC = () => {
               }}
               className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
                 viewMode === 'mission'
-                  ? 'bg-emerald-600 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                  ? 'bg-red-700 text-white font-bold shadow-[0_0_10px_rgba(185,28,28,0.5)]'
                   : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
               }`}
             >
-              <Crosshair className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Misión: Fuga C-9</span>
-            </button>
-
-            {/* Primer Campamento Refugio & Sistema de Asedios de las 25 Facciones */}
-            <button
-              onClick={() => {
-                playCyberSound('click');
-                setViewMode('camp');
-              }}
-              className={`px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0 ${
-                viewMode === 'camp'
-                  ? 'bg-amber-600 text-white font-bold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
-                  : 'bg-black/50 text-gray-400 hover:text-white border border-gray-800'
-              }`}
-            >
-              <Tent className="w-3.5 h-3.5 text-amber-300" />
-              <span>Campamento & Asedios</span>
+              <Crosshair className="w-3.5 h-3.5 text-red-300" />
+              <span>Fuga C-9</span>
             </button>
 
             {/* Generador y Exportador de APK para Android */}
@@ -673,6 +1230,59 @@ export const DeadLanAppView: React.FC = () => {
             >
               <Download className="w-3.5 h-3.5 text-cyan-300" />
               <span>Exportar APK</span>
+            </button>
+          </div>
+
+          {/* Botones de Utilidad a la Derecha */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setIsGraphicsModalOpen(true);
+              }}
+              className="p-1.5 rounded-xl bg-black/60 hover:bg-black/90 border border-red-500/40 text-red-300 transition text-[11px]"
+              title="Calidad de Gráficos"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+            </button>
+
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                setIsChromeVsApkModalOpen(true);
+              }}
+              className="p-1.5 rounded-xl bg-black/60 hover:bg-black/90 border border-amber-500/40 text-amber-300 transition text-[11px]"
+              title="Explicación Chrome vs APK"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+            </button>
+
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                if (typeof document !== 'undefined') {
+                  if (document.fullscreenElement) {
+                    document.exitFullscreen?.().catch(() => {});
+                  } else {
+                    document.documentElement.requestFullscreen?.().catch(() => {});
+                  }
+                }
+              }}
+              className="p-1.5 rounded-xl bg-black/60 hover:bg-black/90 border border-gray-700 text-gray-300 transition text-[11px]"
+              title="Pantalla Completa"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              onClick={() => {
+                playCyberSound('click');
+                if (onExitToControl) onExitToControl();
+                else if (onToggleFullscreen) onToggleFullscreen?.();
+              }}
+              className="px-2 py-1 rounded-xl bg-cyan-950/50 hover:bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-mono text-[10px] font-bold transition"
+            >
+              Salir
             </button>
           </div>
         </div>
@@ -700,6 +1310,24 @@ export const DeadLanAppView: React.FC = () => {
             ✕
           </button>
         </div>
+      )}
+
+      {/* PANTALLA INTRODUCCIÓN CINEMATOGRÁFICA INTERACTIVA */}
+      {viewMode === 'cinematic_story' && (
+        <DeadLanCinematicIntro
+          onComplete={() => setViewMode('open_world_3d')}
+          onSkip={() => setViewMode('open_world_3d')}
+        />
+      )}
+
+      {/* PANTALLA 3D: MUNDO ABIERTO MASIVO E INFILTRACIÓN (ESTILO FAR CRY / WALK-AROUND) */}
+      {viewMode === 'open_world_3d' && (
+        <DeadLan3DWorld
+          onExit={() => setViewMode('lobby')}
+          initialQuality={graphicQuality}
+          weather={activeWeather}
+          initialOrigin={selectedOrigin}
+        />
       )}
 
       {/* PANTALLA 2: LOBBY PRINCIPAL LAN (ANIMADO CON CLIMA Y RADAR) */}
@@ -911,23 +1539,71 @@ export const DeadLanAppView: React.FC = () => {
 
               <div className="space-y-2">
                 {connectedPlayers.map((player) => (
-                  <div key={player.id} className="p-2.5 rounded-xl bg-black/50 border border-gray-800 flex items-center justify-between font-mono text-xs">
-                    <div>
-                      <div className="font-bold text-white flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        {player.name}
+                  <div key={player.id} className="p-2.5 rounded-xl bg-black/60 border border-gray-800 flex items-center justify-between font-mono text-xs hover:border-gray-700 transition">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl shrink-0">{player.icon}</span>
+                      <div>
+                        <div className="font-bold text-white flex items-center gap-1.5 text-xs">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                          <span>{player.name}</span>
+                        </div>
+                        <div className="text-[10px] text-cyan-300 font-bold">{player.role}</div>
+                        <div className="text-[9px] text-gray-400">{player.sector}</div>
                       </div>
-                      <div className="text-[10px] text-gray-400">{player.role}</div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <span className="text-[10px] text-emerald-400 font-bold block">{player.ping}</span>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300">{player.status}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">{player.status}</span>
                     </div>
                   </div>
                 ))}
               </div>
 
+              {/* Selector de Origen para el Host */}
+              <div className="p-2.5 rounded-xl bg-red-950/30 border border-red-500/30">
+                <div className="flex items-center justify-between text-[10px] font-mono text-gray-400 mb-1.5">
+                  <span className="text-red-400 font-bold">TU ORIGEN DE INICIO:</span>
+                  <span className="text-gray-400">Spawn Único</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(Object.keys(PLAYER_ORIGINS) as PlayerOriginId[]).map((originKey) => {
+                    const orig = PLAYER_ORIGINS[originKey];
+                    const isSel = selectedOrigin === originKey;
+                    return (
+                      <button
+                        key={originKey}
+                        onClick={() => {
+                          setSelectedOrigin(originKey);
+                          playCyberSound('click');
+                        }}
+                        className={`p-1.5 rounded-lg border text-left transition flex items-center gap-1.5 ${
+                          isSel
+                            ? 'bg-red-600/30 border-red-500 text-white font-bold'
+                            : 'bg-black/40 border-gray-800 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <span className="text-sm">{orig.icon}</span>
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-mono truncate">{orig.name}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="pt-2 border-t border-gray-800 space-y-2">
+                <button
+                  onClick={() => {
+                    playCyberSound('approve');
+                    setViewMode('open_world_3d');
+                  }}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-cyan-500 hover:brightness-110 text-white font-mono text-xs font-black uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.5)] border border-cyan-300 active:scale-95"
+                >
+                  <Crosshair className="w-4 h-4 text-cyan-200" />
+                  <span>🎮 Entrar al Mundo 3D (Caminar/Far Cry)</span>
+                </button>
+
                 <button
                   onClick={() => {
                     playCyberSound('click');
@@ -1917,7 +2593,15 @@ export const DeadLanAppView: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 font-mono text-xs">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+              <a
+                href="/DeadLan_Godot4_Project.zip"
+                download="DeadLan_Godot4_Project.zip"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:brightness-110 text-white font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.5)] active:scale-95 transition"
+              >
+                <Download className="w-4 h-4 text-white" />
+                <span>DESCARGAR PROYECTO GODOT 4 (.ZIP COMPLETO)</span>
+              </a>
               <span className="px-3 py-1.5 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-bold">
                 ENet P2P • 0 Servidores Externos
               </span>
@@ -1947,7 +2631,43 @@ export const DeadLanAppView: React.FC = () => {
               }`}
             >
               <Wifi className="w-3.5 h-3.5" />
-              <span>NetworkManager.gd (P2P LAN)</span>
+              <span>NetworkManager.gd (P2P + Pausa)</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedApkFile('outpost_manager')}
+              className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                selectedApkFile === 'outpost_manager'
+                  ? 'bg-emerald-600 text-white font-bold shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                  : 'bg-[#050c1e] text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <RadioTower className="w-3.5 h-3.5 text-emerald-300" />
+              <span>OutpostManager.gd (Far Cry)</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedApkFile('vehicle_manager')}
+              className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                selectedApkFile === 'vehicle_manager'
+                  ? 'bg-amber-600 text-white font-bold shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                  : 'bg-[#050c1e] text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5 text-amber-300" />
+              <span>VehicleManager.gd (Piezas & Taller)</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedApkFile('counter_spy_manager')}
+              className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                selectedApkFile === 'counter_spy_manager'
+                  ? 'bg-purple-600 text-white font-bold shadow-[0_0_12px_rgba(147,51,234,0.4)]'
+                  : 'bg-[#050c1e] text-gray-400 hover:text-white border border-gray-800'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+              <span>CounterSpyManager.gd (Vance)</span>
             </button>
 
             <button
@@ -1959,7 +2679,7 @@ export const DeadLanAppView: React.FC = () => {
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>AndroidManifest.xml (Permisos)</span>
+              <span>AndroidManifest.xml (Immersive Sticky)</span>
             </button>
 
             <button
@@ -2061,6 +2781,59 @@ func _on_peer_disconnected(id: int) -> void:
 @rpc("any_peer", "call_local")
 func sync_character_data(char_data: Dictionary) -> void:
 	print("[DEAD LAN] Recibida apariencia de recluso mendigo: ", char_data)
+`,
+                      outpost_manager: `extends Node
+# DEAD LAN - PUESTOS MILITARES Y TORRES (FAR CRY)
+# com.tactical.deadlan
+
+signal outpost_liberated(outpost_id, reward_data)
+signal radio_tower_activated(sector_id)
+
+var conquered_outposts := []
+
+func liberate_outpost(outpost_id: String, silent: bool) -> void:
+	if outpost_id not in conquered_outposts:
+		conquered_outposts.append(outpost_id)
+		print("[DEAD LAN] ¡PUESTO MILITAR CONQUISTADO! Silencioso: ", silent)
+		emit_signal("outpost_liberated", outpost_id, {"fast_travel": true})
+
+func sabotage_outpost_alarm(alarm_node: Node) -> void:
+	alarm_node.set("disabled", true)
+	print("[DEAD LAN] Vance saboteó las alarmas del puesto militar.")
+
+func release_caged_bow(cage_node: Node) -> void:
+	cage_node.call("open_gate")
+	print("[DEAD LAN] ¡Licker liberado de la jaula causando pánico en la Milicia!")
+`,
+                      vehicle_manager: `extends Node
+# DEAD LAN - TALLER MECÁNICO Y VEHÍCULOS BLINDADOS
+# com.tactical.deadlan
+
+var vehicles_inventory := {
+	"buggy_4x4": {"fixed": false, "fuel": 15, "parts": ["bateria_12v", "bujias"]},
+	"pickup_hilux": {"fixed": false, "fuel": 30, "parts": ["4_neumaticos", "radiador", "blindaje"]},
+	"ural_6x6": {"fixed": false, "fuel": 50, "parts": ["2_baterias_24v", "50_acero"]}
+}
+
+func repair_vehicle(veh_id: String, parts_provided: Array) -> bool:
+	if veh_id in vehicles_inventory:
+		vehicles_inventory[veh_id]["fixed"] = true
+		print("[DEAD LAN] Vehículo ", veh_id, " reparado y operativo.")
+		return true
+	return false
+`,
+                      counter_spy_manager: `extends Node
+# DEAD LAN - CÉLULA ALIADA DE CONTRA-ESPIONAJE (LUGARTENIENTE VANCE)
+# com.tactical.deadlan
+
+signal spy_detected(spy_name, faction)
+
+func scan_refugee(npc_data: Dictionary) -> bool:
+	if npc_data.get("has_concealed_ceramic_knife", false):
+		emit_signal("spy_detected", npc_data.get("name"), npc_data.get("faction"))
+		print("[DEAD LAN] Vance interceptó a un espía con daga oculta.")
+		return false
+	return true
 `,
                       android_manifest: `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -2206,6 +2979,62 @@ func _on_peer_disconnected(id: int) -> void:
 @rpc("any_peer", "call_local")
 func sync_character_data(char_data: Dictionary) -> void:
 	print("[DEAD LAN] Recibida apariencia de recluso mendigo: ", char_data)`}
+
+                {selectedApkFile === 'outpost_manager' && `extends Node
+# DEAD LAN - PUESTOS MILITARES Y TORRES (FAR CRY)
+# com.tactical.deadlan
+
+signal outpost_liberated(outpost_id, reward_data)
+signal radio_tower_activated(sector_id)
+
+var conquered_outposts := []
+
+func liberate_outpost(outpost_id: String, silent: bool) -> void:
+	if outpost_id not in conquered_outposts:
+		conquered_outposts.append(outpost_id)
+		print("[DEAD LAN] ¡PUESTO MILITAR CONQUISTADO! Silencioso: ", silent)
+		emit_signal("outpost_liberated", outpost_id, {"fast_travel": true})
+
+func sabotage_outpost_alarm(alarm_node: Node) -> void:
+	alarm_node.set("disabled", true)
+	print("[DEAD LAN] Vance saboteó las alarmas del puesto militar.")
+
+func release_caged_bow(cage_node: Node) -> void:
+	cage_node.call("open_gate")
+	print("[DEAD LAN] ¡Licker liberado de la jaula causando pánico en la Milicia!")
+`}
+
+                {selectedApkFile === 'vehicle_manager' && `extends Node
+# DEAD LAN - TALLER MECÁNICO Y VEHÍCULOS BLINDADOS
+# com.tactical.deadlan
+
+var vehicles_inventory := {
+	"buggy_4x4": {"fixed": false, "fuel": 15, "parts": ["bateria_12v", "bujias"]},
+	"pickup_hilux": {"fixed": false, "fuel": 30, "parts": ["4_neumaticos", "radiador", "blindaje"]},
+	"ural_6x6": {"fixed": false, "fuel": 50, "parts": ["2_baterias_24v", "50_acero"]}
+}
+
+func repair_vehicle(veh_id: String, parts_provided: Array) -> bool:
+	if veh_id in vehicles_inventory:
+		vehicles_inventory[veh_id]["fixed"] = true
+		print("[DEAD LAN] Vehículo ", veh_id, " reparado y operativo.")
+		return true
+	return false
+`}
+
+                {selectedApkFile === 'counter_spy_manager' && `extends Node
+# DEAD LAN - CÉLULA ALIADA DE CONTRA-ESPIONAJE (LUGARTENIENTE VANCE)
+# com.tactical.deadlan
+
+signal spy_detected(spy_name, faction)
+
+func scan_refugee(npc_data: Dictionary) -> bool:
+	if npc_data.get("has_concealed_ceramic_knife", false):
+		emit_signal("spy_detected", npc_data.get("name"), npc_data.get("faction"))
+		print("[DEAD LAN] Vance interceptó a un espía con daga oculta.")
+		return false
+	return true
+`}
 
                 {selectedApkFile === 'android_manifest' && `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -2785,7 +3614,752 @@ PASO A PASO PARA COMPILAR DEAD LAN EN APK PARA TU MÓVIL ANDROID
           </div>
         </div>
       )}
+
+      {/* PANTALLA 9: CÉLULA ALIADA DE CONTRA-ESPIONAJE (LUGARTENIENTE VANCE) */}
+      {viewMode === 'counter_intel' && (
+        <div className="flex-1 p-3 sm:p-4 max-w-5xl mx-auto w-full space-y-4 animate-fadeIn font-mono">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-purple-950/90 via-[#050c1e] to-black p-4 rounded-2xl border border-purple-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-purple-400 uppercase tracking-widest font-bold flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                  CÉLULA TÁCTICA DE CONTRA-ESPIONAJE
+                </span>
+                <span className="text-[9px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">
+                  8 ESPÍAS ALIADOS EN SERVICIO
+                </span>
+              </div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2 mt-0.5">
+                <Eye className="w-5 h-5 text-purple-400" />
+                Lugarteniente Vance: Seguridad & Contrainteligencia
+              </h2>
+              <p className="text-xs text-gray-300">
+                Detección de infiltrados con harapos, intercepción de radiofrecuencias enemigas y escolta nocturna del líder.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                onClick={() => {
+                  playCyberSound('switch');
+                  setCommanderProtectionActive(!commanderProtectionActive);
+                  showTacticalToast(
+                    !commanderProtectionActive ? 'PROTECCIÓN DEL LÍDER ACTIVADA' : 'GUARDIA PERSONAL EN PAUSA',
+                    !commanderProtectionActive
+                      ? 'Vance y 4 exploradores montan guardia continua alrededor de tu tienda para evitar degollamientos nocturnos.'
+                      : 'Guardia reducida. Vance redistribuyó agentes al perímetro exterior.',
+                    !commanderProtectionActive ? 'success' : 'warn'
+                  );
+                }}
+                className={`px-3 py-2 rounded-xl border font-bold transition flex items-center gap-1.5 active:scale-95 ${
+                  commanderProtectionActive
+                    ? 'bg-purple-950/80 border-purple-500 text-purple-300 shadow-[0_0_15px_rgba(147,51,234,0.4)]'
+                    : 'bg-stone-900 border-gray-700 text-gray-400'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>{commanderProtectionActive ? '✓ Escolta del Líder Activa (100% Seguro)' : 'Activar Escolta Nocturna'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Estadísticas de Inteligencia */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <span className="text-[10px] text-gray-400 block">LEALTAD DE VANCE:</span>
+              <span className="text-purple-400 font-bold text-sm">88% (Inquebrantable)</span>
+              <span className="text-[9px] text-gray-500 block">8 agentes subordinados</span>
+            </div>
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <span className="text-[10px] text-gray-400 block">FRECUENCIAS RASTREADAS:</span>
+              <span className="text-cyan-400 font-bold text-sm">142.85 MHz (Milicia)</span>
+              <span className="text-[9px] text-gray-500 block">Canales enemigos bajo escucha</span>
+            </div>
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <span className="text-[10px] text-gray-400 block">INFILTRADOS DETECTADOS:</span>
+              <span className="text-amber-400 font-bold text-sm">2 Espías Falsos</span>
+              <span className="text-[9px] text-gray-500 block">Desarmados en el portón</span>
+            </div>
+            <div className="p-3 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-1 shadow-lg">
+              <span className="text-[10px] text-gray-400 block">SEÑUELOS PLANTADOS:</span>
+              <span className="text-emerald-400 font-bold text-sm">1 Mapa Trampa</span>
+              <span className="text-[9px] text-gray-500 block">Desvía hordas a nidos B.O.W.</span>
+            </div>
+          </div>
+
+          {/* Operaciones de Contra-Espionaje Activas */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-purple-400" />
+              REPORTES DE INTELIGENCIA & CONTRAMEDIDAS
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {counterIntelReports.map((report) => (
+                <div
+                  key={report.id}
+                  className={`p-4 rounded-2xl border space-y-3 transition-all ${
+                    report.resolved
+                      ? 'bg-purple-950/20 border-purple-500/30'
+                      : 'bg-[#050c1e] border-purple-500/60 shadow-[0_0_20px_rgba(147,51,234,0.25)]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-black/60 text-purple-300 font-bold uppercase">
+                      {report.faction}
+                    </span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
+                      report.resolved ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400 animate-pulse'
+                    }`}>
+                      {report.resolved ? 'NEUTRALIZADO' : 'EN CURSO'}
+                    </span>
+                  </div>
+
+                  <h4 className="font-bold text-white text-xs leading-snug">{report.title}</h4>
+                  <p className="text-[11px] text-gray-300 font-sans leading-relaxed">{report.desc}</p>
+
+                  <div className="p-2 rounded-xl bg-black/60 border border-gray-800 text-[10px]">
+                    <span className="text-gray-400 block">Acción de Vance:</span>
+                    <span className="text-purple-300 font-bold">{report.action}</span>
+                  </div>
+
+                  {!report.resolved && (
+                    <button
+                      onClick={() => {
+                        playCyberSound('approve');
+                        setCounterIntelReports((prev) =>
+                          prev.map((r) => (r.id === report.id ? { ...r, resolved: true } : r))
+                        );
+                        showTacticalToast('OPERACIÓN RESUELTA', `Vance neutralizó la amenaza de ${report.faction}.`, 'success');
+                      }}
+                      className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Ejecutar Contramedida Táctica</span>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Acciones Tácticas de Vance */}
+          <div className="bg-[#050c1e] p-4 rounded-2xl border border-gray-800 space-y-3 shadow-xl">
+            <h4 className="font-bold text-white text-xs flex items-center gap-2">
+              <Zap className="w-4 h-4 text-purple-400" />
+              DESPLIEGUE RÁPIDO DE CÉLULAS DE VANCE EN EL MAPA DE 10,000 KM²
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <button
+                onClick={() => {
+                  playCyberSound('approve');
+                  showTacticalToast('SABOTAJE DE SIRENA', 'Vance cortó los cables de la sirena de alarma en Puesto Radar Delta.', 'success');
+                }}
+                className="p-3 rounded-xl bg-black/60 hover:bg-black/90 border border-gray-800 text-left transition space-y-1 active:scale-95"
+              >
+                <span className="text-purple-400 font-bold block text-xs">1. Sabotear Alarma de Base Enemiga</span>
+                <p className="text-[10px] text-gray-400 font-sans">Inutiliza las sirenas para evitar refuerzos militares durante tu asalto.</p>
+              </button>
+
+              <button
+                onClick={() => {
+                  playCyberSound('approve');
+                  showTacticalToast('INHIBIDOR DE FRECUENCIA', 'Comunicaciones de la Milicia bloqueadas durante 60 minutos en el sector.', 'info');
+                }}
+                className="p-3 rounded-xl bg-black/60 hover:bg-black/90 border border-gray-800 text-left transition space-y-1 active:scale-95"
+              >
+                <span className="text-cyan-400 font-bold block text-xs">2. Inhibidor de Señal de Radio</span>
+                <p className="text-[10px] text-gray-400 font-sans">Interfiere las radios tácticas de la Milicia para impedir que organicen contraataques.</p>
+              </button>
+
+              <button
+                onClick={() => {
+                  playCyberSound('approve');
+                  showTacticalToast('SEÑUELO PLANTADO', 'Mapa señuelo dejado en la cantera. 15 saqueadores desviados hacia un nido de Lickers.', 'success');
+                }}
+                className="p-3 rounded-xl bg-black/60 hover:bg-black/90 border border-gray-800 text-left transition space-y-1 active:scale-95"
+              >
+                <span className="text-amber-400 font-bold block text-xs">3. Sembrar Mapa con Señuelo</span>
+                <p className="text-[10px] text-gray-400 font-sans">Guía a facciones hostiles hacia zonas de alta radiación o colmenas de mutantes.</p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PANTALLA 10: PUESTOS MILITARES & MISIONES TÁCTICAS (FAR CRY / CALL OF DUTY / DELTA FORCE / COMANDOS) */}
+      {viewMode === 'outposts' && (
+        <div className="flex-1 p-3 sm:p-4 max-w-5xl mx-auto w-full space-y-4 animate-fadeIn font-mono">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-emerald-950/90 via-[#050c1e] to-black p-4 rounded-2xl border border-emerald-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-emerald-400 uppercase tracking-widest font-bold flex items-center gap-1">
+                  <RadioTower className="w-3.5 h-3.5 text-emerald-400" />
+                  RED TÁCTICA DE MUNDO ABIERTO
+                </span>
+                <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                  FAR CRY + CALL OF DUTY + DELTA FORCE + COMANDOS
+                </span>
+              </div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2 mt-0.5">
+                <Crosshair className="w-5 h-5 text-emerald-400" />
+                Puestos Militares Conquistables & Misiones Spec Ops
+              </h2>
+              <p className="text-xs text-gray-300">
+                Asalta bases de la Milicia, desactiva alarmas, escala torres de radio para despejar niebla de guerra y despliega rachas de apoyo.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-bold">
+                10,000 KM² EXPLORABLES
+              </span>
+            </div>
+          </div>
+
+          {/* Rachas y Apoyo Táctico (Killstreaks) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-2xl bg-[#050c1e] border border-cyan-500/30 flex items-center justify-between shadow-lg">
+              <div>
+                <span className="text-[10px] text-gray-400 uppercase block">DRON RECONOCIMIENTO (UAV):</span>
+                <span className="text-cyan-300 font-bold text-xs">Escáner Acústico 150m</span>
+              </div>
+              <button
+                onClick={() => {
+                  playCyberSound('approve');
+                  showTacticalToast('DRON UAV DESPLEGADO', 'Puestos militares y criaturas B.O.W. resaltados a través de muros.', 'info');
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-200 border border-cyan-500/40 text-[11px] font-bold transition active:scale-95"
+              >
+                Activar UAV
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#050c1e] border border-red-500/30 flex items-center justify-between shadow-lg">
+              <div>
+                <span className="text-[10px] text-gray-400 uppercase block">MORTEROS COORDINADOS:</span>
+                <span className="text-red-400 font-bold text-xs">{killstreaks.mortarBarrageCount} Andanadas Disponibles</span>
+              </div>
+              <button
+                disabled={killstreaks.mortarBarrageCount <= 0}
+                onClick={() => {
+                  playCyberSound('approve');
+                  setKillstreaks({ ...killstreaks, mortarBarrageCount: killstreaks.mortarBarrageCount - 1 });
+                  showTacticalToast('FUEGO DE MORTERO', '3 Proyectiles pesados impactaron sobre la patrulla de la Milicia.', 'success');
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
+              >
+                Lanzar Mortero
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#050c1e] border border-amber-500/30 flex items-center justify-between shadow-lg">
+              <div>
+                <span className="text-[10px] text-gray-400 uppercase block">CAJA DE SUMINISTROS:</span>
+                <span className="text-amber-400 font-bold text-xs">{killstreaks.tacticalSupplyDropCount} Cajas de Apoyo</span>
+              </div>
+              <button
+                disabled={killstreaks.tacticalSupplyDropCount <= 0}
+                onClick={() => {
+                  playCyberSound('approve');
+                  setKillstreaks({ ...killstreaks, tacticalSupplyDropCount: killstreaks.tacticalSupplyDropCount - 1 });
+                  setCampData({ ...campData, ammo: campData.ammo + 30, food: campData.food + 20 });
+                  showTacticalToast('SUMINISTRO LANZADO', '+30 Balas y +20 Raciones recibidas por paracaídas.', 'success');
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold transition active:scale-95 disabled:opacity-50"
+              >
+                Solicitar Drop
+              </button>
+            </div>
+          </div>
+
+          {/* Sección Puestos Militares (Far Cry Style) */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+              <RadioTower className="w-4 h-4 text-emerald-400" />
+              PUESTOS MILITARES & TORRES DE RECONOCIMIENTO (FAR CRY STYLE)
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {outposts.map((outpost) => (
+                <div
+                  key={outpost.id}
+                  className={`p-4 rounded-2xl border space-y-3 transition-all ${
+                    outpost.status === 'conquistado'
+                      ? 'bg-emerald-950/20 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                      : 'bg-[#050c1e] border-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+                    <span className="text-[10px] text-gray-400">{outpost.sector}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                      outpost.status === 'conquistado' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                    }`}>
+                      {outpost.status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <h4 className="font-bold text-white text-xs">{outpost.name}</h4>
+
+                  <div className="space-y-1 text-[11px] text-gray-300">
+                    <div>• Guarnición: <strong>{outpost.garrison} soldados enemigos</strong></div>
+                    <div>• Sirenas de Alarma: <strong>{outpost.alarmsDisabled ? 'Desactivadas por Vance' : `${outpost.alarmsCount} activas`}</strong></div>
+                    {outpost.lickerCagePresent && (
+                      <div className="text-amber-400">• Jaula con Licker: <strong>{outpost.lickerReleased ? '¡Liberado!' : 'Enjaulado'}</strong></div>
+                    )}
+                    <div className="text-[10px] text-emerald-400 pt-1">Recompensa: {outpost.reward}</div>
+                  </div>
+
+                  {outpost.status === 'hostil' && (
+                    <div className="space-y-2 pt-2 border-t border-gray-800">
+                      {outpost.lickerCagePresent && !outpost.lickerReleased && (
+                        <button
+                          onClick={() => {
+                            playCyberSound('approve');
+                            setOutposts(outposts.map((o) => (o.id === outpost.id ? { ...o, lickerReleased: true, garrison: Math.max(2, o.garrison - 10) } : o)));
+                            showTacticalToast('¡LICKER LIBERADO!', 'El disparo al candado desató la criatura: diezma a 10 soldados en pánico.', 'danger');
+                          }}
+                          className="w-full py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 text-[10px] font-bold transition flex items-center justify-center gap-1"
+                        >
+                          <Crosshair className="w-3.5 h-3.5" />
+                          <span>Disparar al Candado de la Jaula B.O.W.</span>
+                        </button>
+                      )}
+
+                      {!outpost.alarmsDisabled && outpost.alarmsCount > 0 && (
+                        <button
+                          onClick={() => {
+                            playCyberSound('approve');
+                            setOutposts(outposts.map((o) => (o.id === outpost.id ? { ...o, alarmsDisabled: true } : o)));
+                            showTacticalToast('ALARMA INUTILIZADA', 'Vance cortó los cables. La Milicia no puede pedir refuerzos.', 'success');
+                          }}
+                          className="w-full py-1.5 rounded-xl bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-200 border border-cyan-500/40 text-[10px] font-bold transition flex items-center justify-center gap-1"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Vance: Sabotear Alarma Silenciosamente</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          playCyberSound('approve');
+                          setOutposts(outposts.map((o) => (o.id === outpost.id ? { ...o, status: 'conquistado', garrison: 0, fogCleared: true } : o)));
+                          setCampData({ ...campData, scrap: campData.scrap + 50, ammo: campData.ammo + 40 });
+                          showTacticalToast('¡PUESTO CONQUISTADO!', 'Bandera de tu facción izada. Desbloqueado viaje rápido y +50 Chatarra.', 'success');
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                      >
+                        <Sword className="w-3.5 h-3.5" />
+                        <span>Asaltar y Conquistar Puesto</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {outpost.status === 'conquistado' && (
+                    <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[10px] text-emerald-300 text-center font-bold">
+                      ✓ Puesto Aliado Seguro • Viaje Rápido Habilitado
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Misiones Spec Ops Tácticas (CoD / Delta Force / Comandos) */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Crosshair className="w-4 h-4 text-red-400" />
+              MISIONES SPEC OPS • INFILTRACIÓN & ASALTO TÁCTICO
+            </h3>
+
+            <div className="space-y-3">
+              {specOpsMissions.map((mission) => (
+                <div
+                  key={mission.id}
+                  className={`p-4 rounded-2xl border space-y-2.5 transition-all ${
+                    mission.status === 'completada'
+                      ? 'bg-emerald-950/20 border-emerald-500/40 opacity-75'
+                      : 'bg-[#050c1e] border-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-black/60 text-red-400 font-bold uppercase">
+                        {mission.type}
+                      </span>
+                      <h4 className="font-bold text-white text-sm mt-1">{mission.title}</h4>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                      Dificultad: {mission.difficulty}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-gray-300 font-sans leading-relaxed">{mission.lore}</p>
+
+                  <div className="p-2 rounded-xl bg-black/60 border border-gray-800 flex items-center justify-between text-[10px]">
+                    <span className="text-gray-400">Recompensa Táctica:</span>
+                    <span className="text-emerald-400 font-bold">{mission.reward}</span>
+                  </div>
+
+                  {mission.status === 'disponible' ? (
+                    <button
+                      onClick={() => {
+                        playCyberSound('approve');
+                        setSpecOpsMissions(specOpsMissions.map((m) => (m.id === mission.id ? { ...m, status: 'completada' } : m)));
+                        setCampData({ ...campData, ammo: campData.ammo + 45, scrap: campData.scrap + 40 });
+                        showTacticalToast('MISIÓN COMPLETADA', `Operación exitosa: ${mission.title}.`, 'success');
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 text-white font-bold text-xs transition active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Desplegar Escuadra y Ejecutar Operación</span>
+                    </button>
+                  ) : (
+                    <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[10px] text-emerald-300 text-center font-bold">
+                      ✓ Operación Exitosa • Recompensas Añadidas al Arsenal
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PANTALLA 11: TALLER MECÁNICO, EVOLUCIÓN DE FORTALEZAS & COMUNIDAD */}
+      {viewMode === 'vehicles' && (
+        <div className="flex-1 p-3 sm:p-4 max-w-5xl mx-auto w-full space-y-4 animate-fadeIn font-mono">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-amber-950/90 via-[#050c1e] to-black p-4 rounded-2xl border border-amber-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xl">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-amber-400 uppercase tracking-widest font-bold flex items-center gap-1">
+                  <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                  LOGÍSTICA PESADA & INFRAESTRUCTURA
+                </span>
+                <span className="text-[9px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                  THE FOREST + STATE OF DECAY + THE WALKING DEAD
+                </span>
+              </div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2 mt-0.5">
+                <Truck className="w-5 h-5 text-amber-400" />
+                Taller Mecánico, Vehículos & Fortalezas
+              </h2>
+              <p className="text-xs text-gray-300">
+                Repara camionetas averiadas con bujías y neumáticos, tala madera en los bosques y evoluciona tus bases caídas con materiales reales.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                onClick={() => {
+                  playCyberSound('approve');
+                  setMechanicInventory({ ...mechanicInventory, woodLogs: mechanicInventory.woodLogs + 35 });
+                  showTacticalToast('TALA EN EL BOSQUE', '+35 Troncos de pino recolectados al estilo The Forest.', 'success');
+                }}
+                className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition active:scale-95 flex items-center gap-1.5 shadow-md"
+              >
+                <span>🪓 Talar Madera (+35)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Inventario de Materiales Tácticos */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
+            <div className="p-2.5 rounded-xl bg-[#050c1e] border border-gray-800 space-y-0.5">
+              <span className="text-[9px] text-gray-400 block">TRONCOS MADERA:</span>
+              <span className="text-amber-300 font-bold text-sm">{mechanicInventory.woodLogs} uds</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#050c1e] border border-gray-800 space-y-0.5">
+              <span className="text-[9px] text-gray-400 block">PLACAS DE ACERO:</span>
+              <span className="text-cyan-300 font-bold text-sm">{mechanicInventory.steelPlates} uds</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#050c1e] border border-gray-800 space-y-0.5">
+              <span className="text-[9px] text-gray-400 block">CEMENTO FORTIFICADO:</span>
+              <span className="text-stone-300 font-bold text-sm">{mechanicInventory.cement} sacos</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#050c1e] border border-gray-800 space-y-0.5">
+              <span className="text-[9px] text-gray-400 block">DIÉSEL / GASOLINA:</span>
+              <span className="text-emerald-300 font-bold text-sm">{mechanicInventory.fuelLiters} Litros</span>
+            </div>
+            <div className="p-2.5 rounded-xl bg-[#050c1e] border border-gray-800 space-y-0.5">
+              <span className="text-[9px] text-gray-400 block">BATERÍAS Y BUJÍAS:</span>
+              <span className="text-purple-300 font-bold text-sm">{mechanicInventory.batteries12V} Baterías • {mechanicInventory.sparkPlugs} Bujías</span>
+            </div>
+          </div>
+
+          {/* Vehículos del Páramo de 10,000 km² */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Car className="w-4 h-4 text-amber-400" />
+              VEHÍCULOS DEL PÁRAMO • REPARACIÓN POR PIEZAS & BLINDAJE
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {vehicles.map((veh) => (
+                <div
+                  key={veh.id}
+                  className={`p-4 rounded-2xl border space-y-3 transition-all ${
+                    veh.fixed
+                      ? 'bg-amber-950/20 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                      : 'bg-[#050c1e] border-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+                    <span className="text-[10px] text-gray-400">{veh.type}</span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
+                      veh.fixed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400 animate-pulse'
+                    }`}>
+                      {veh.fixed ? 'OPERATIVO' : 'AVERIADO'}
+                    </span>
+                  </div>
+
+                  <h4 className="font-bold text-white text-xs">{veh.name}</h4>
+
+                  <div className="space-y-1 text-[11px] text-gray-300">
+                    <div>• Velocidad punta: <strong>{veh.speed}</strong></div>
+                    <div>• Capacidad: <strong>{veh.capacity}</strong></div>
+                    <div>• Combustible: <strong>{veh.fuel}/{veh.maxFuel} L</strong></div>
+                    <div className="text-[10px] text-amber-300 pt-1">Estado: {veh.condition}</div>
+                  </div>
+
+                  {!veh.fixed ? (
+                    <button
+                      onClick={() => {
+                        playCyberSound('approve');
+                        setVehicles(vehicles.map((v) => (v.id === veh.id ? { ...v, fixed: true, condition: '100% Reparado y Blindado' } : v)));
+                        setMechanicInventory({
+                          ...mechanicInventory,
+                          sparkPlugs: Math.max(0, mechanicInventory.sparkPlugs - veh.needs.sparkPlugs),
+                          batteries12V: Math.max(0, mechanicInventory.batteries12V - veh.needs.batteries),
+                          fuelLiters: Math.max(0, mechanicInventory.fuelLiters - veh.needs.fuel),
+                          tires: Math.max(0, mechanicInventory.tires - veh.needs.tires),
+                          steelPlates: Math.max(0, mechanicInventory.steelPlates - veh.needs.steel)
+                        });
+                        showTacticalToast('VEHÍCULO REPARADO', `${veh.name} listo para recorrer los 10,000 km².`, 'success');
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                    >
+                      <Wrench className="w-3.5 h-3.5" />
+                      <span>Instalar Repuestos & Arrancar Motor</span>
+                    </button>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[10px] text-emerald-300 text-center font-bold">
+                      ✓ Vehículo Operativo • Conducción en Red LAN Activa
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Evolución de Fortalezas & Gestión Comunitaria (State of Decay) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Niveles de Fortaleza */}
+            <div className="p-4 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-3 shadow-xl">
+              <h4 className="font-bold text-white text-xs flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-emerald-400" />
+                EVOLUCIÓN MODULAR DE FORTALEZA (NIVEL {campData.fortificationLevel}/5)
+              </h4>
+              <p className="text-[11px] text-gray-300 font-sans leading-relaxed">
+                Tus bases y cuarteles caídos pueden transformarse con materiales reales:
+              </p>
+              <div className="space-y-2 text-[10px]">
+                <div className="p-2 rounded-xl bg-black/60 border border-gray-800">
+                  <strong className="text-amber-300 block">Nivel 1: Empalizada de Pino y Fosos (The Forest)</strong>
+                  <span className="text-gray-400">Protección básica contra zombis lentos • Requiere 40 Troncos.</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/60 border border-gray-800">
+                  <strong className="text-cyan-300 block">Nivel 2: Muro de Hormigón & Torres de Centinela</strong>
+                  <span className="text-gray-400">Resiste camionetas blindadas • Requiere 60 Cemento y 50 Acero.</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/60 border border-gray-800">
+                  <strong className="text-emerald-300 block">Nivel 3: Base Militar con Torretas Phalanx y Antiaéreos AA</strong>
+                  <span className="text-gray-400">Derriba helicópteros y hordas masivas • Requiere 40 Electrónica.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Gestión Comunitaria (State of Decay / TWD) */}
+            <div className="p-4 rounded-2xl bg-[#050c1e] border border-gray-800 space-y-3 shadow-xl">
+              <h4 className="font-bold text-white text-xs flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-amber-400" />
+                GESTIÓN COMUNITARIA & MORAL (STATE OF DECAY)
+              </h4>
+              <div className="space-y-2 text-[11px]">
+                <div className="flex items-center justify-between p-2 rounded-xl bg-black/60 border border-gray-800">
+                  <span className="text-gray-400">Moral Comunitaria:</span>
+                  <span className="text-emerald-400 font-bold">{communityStats.morale}% (Sin motines)</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-xl bg-black/60 border border-gray-800">
+                  <span className="text-gray-400">Camas en Barracones:</span>
+                  <span className="text-cyan-300 font-bold">{communityStats.bedsOccupied} / {communityStats.bedsAvailable} ocupadas</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-xl bg-black/60 border border-gray-800">
+                  <span className="text-gray-400">Riesgo de Infección Biológica:</span>
+                  <span className="text-emerald-400 font-bold">{communityStats.infectionRisk}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-xl bg-black/60 border border-gray-800">
+                  <span className="text-gray-400">Consumo Diario:</span>
+                  <span className="text-amber-400 font-bold">{communityStats.dailyFoodNeed} Comida / {communityStats.dailyWaterNeed} Agua</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 1: SELECTOR DE CALIDAD GRÁFICA EN TIEMPO REAL */}
+      {isGraphicsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 font-mono animate-fadeIn">
+          <div className="bg-[#050c1e] border border-red-500/60 rounded-3xl p-5 max-w-lg w-full space-y-4 shadow-[0_0_40px_rgba(239,68,68,0.3)]">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-800">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-400" />
+                <h3 className="font-bold text-white text-sm">CONFIGURACIÓN GRÁFICA EN TIEMPO REAL</h3>
+              </div>
+              <button
+                onClick={() => setIsGraphicsModalOpen(false)}
+                className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded-lg bg-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              {(Object.keys(GRAPHIC_PRESETS) as GraphicQuality[]).map((key) => {
+                const preset = GRAPHIC_PRESETS[key];
+                const isSelected = graphicQuality === key;
+                return (
+                  <div
+                    key={key}
+                    onClick={() => {
+                      playCyberSound('switch');
+                      setGraphicQuality(key);
+                      showTacticalToast('PERFIL GRÁFICO CAMBIADO', `${preset.name} activado.`, 'info');
+                    }}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-1.5 ${
+                      isSelected
+                        ? 'bg-red-950/40 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                        : 'bg-black/50 border-gray-800 hover:border-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white text-xs flex items-center gap-1.5">
+                        {isSelected && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />}
+                        {preset.name}
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-black/60 text-emerald-400 font-bold">
+                        {preset.fps}
+                      </span>
+                    </div>
+
+                    <div className="text-[10px] text-gray-400 space-y-0.5 font-sans">
+                      <div>• Resolución: <strong className="text-gray-200">{preset.res}</strong></div>
+                      <div>• Sombras: <strong className="text-gray-200">{preset.shadows}</strong></div>
+                      <div>• API: <strong className="text-cyan-300">{preset.vulkan}</strong></div>
+                      <p className="text-gray-400 pt-0.5">{preset.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setIsGraphicsModalOpen(false)}
+              className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase transition active:scale-95 shadow-md"
+            >
+              Aplicar y Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: EXPLICACIÓN COMPLETA "CHROME VS APK NATIVA ANDROID" */}
+      {isChromeVsApkModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 font-mono animate-fadeIn overflow-y-auto">
+          <div className="bg-[#050c1e] border border-cyan-500/60 rounded-3xl p-5 max-w-lg w-full space-y-4 shadow-[0_0_40px_rgba(6,182,212,0.3)] my-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-800">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-cyan-400" />
+                <h3 className="font-bold text-white text-sm">¿CÓMO FUNCIONA EN CHROME VS EN APK NATIVA?</h3>
+              </div>
+              <button
+                onClick={() => setIsChromeVsApkModalOpen(false)}
+                className="text-gray-400 hover:text-white text-xs px-2 py-1 rounded-lg bg-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs font-sans leading-relaxed text-gray-300 max-h-[65vh] overflow-y-auto pr-1">
+              <div className="p-3.5 rounded-2xl bg-black/60 border border-amber-500/40 space-y-1.5 font-mono">
+                <strong className="text-amber-400 flex items-center gap-1.5 text-xs">
+                  <span>🌐</span> 1. EN EL NAVEGADOR GOOGLE CHROME (AQUÍ EN LA WEB):
+                </strong>
+                <p className="text-[11px] font-sans text-gray-300">
+                  Como estás viendo el juego dentro del navegador Google Chrome en tu teléfono Xiaomi/Android:
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[11px] font-sans text-gray-300">
+                  <li>Chrome reserva obligatoriamente la barra de dirección URL superior (<code>aistudio.google.com</code>) por motivos de seguridad web.</li>
+                  <li>Por eso hemos subido y ocultado los paneles de Proyecto 66 para que <strong>toda la foto de portada y el mendigo recluso queden 100% limpios y visibles</strong>.</li>
+                  <li>Para ocultar la barra de Chrome, pulsa el botón <strong>"Pantalla Completa"</strong> que activa el Fullscreen nativo del navegador.</li>
+                </ul>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/60 border border-emerald-500/40 space-y-1.5 font-mono">
+                <strong className="text-emerald-400 flex items-center gap-1.5 text-xs">
+                  <span>📱</span> 2. EN LA APK STANDALONE INSTALADA (COM.TACTICAL.DEADLAN):
+                </strong>
+                <p className="text-[11px] font-sans text-gray-300">
+                  Cuando exportes y compiles el juego como aplicación APK nativa en Godot Engine 4.3:
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[11px] font-sans text-gray-300">
+                  <li><strong>Chrome NO EXISTE</strong>: Es un ejecutable binario de Android directo, sin navegadores ni páginas web.</li>
+                  <li><strong>Modo Immersivo Total (IMMERSIVE_STICKY)</strong>: La barra de hora/batería de Android y la barra de navegación táctil inferior se ocultan al 100%.</li>
+                  <li><strong>Resolución Ultra HD 100vw x 100vh</strong>: El juego cubre el 100% de la pantalla AMOLED de tu teléfono hasta los bordes.</li>
+                  <li><strong>Vulkan Mobile Puro</strong>: Renderizado gráfico a 60/120 FPS sin depender de conexión a internet.</li>
+                </ul>
+              </div>
+
+              <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[11px] text-cyan-200">
+                💡 <strong>Consejo Táctico:</strong> Puedes pulsar el botón "Exportar APK" en la barra de pestañas para copiar los códigos <code>project.godot</code> y <code>NetworkManager.gd</code> y compilar la APK en 5 minutos con Godot 4.3.
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-1 font-mono">
+              <button
+                onClick={() => {
+                  playCyberSound('approve');
+                  if (typeof document !== 'undefined') {
+                    if (document.fullscreenElement) {
+                      document.exitFullscreen?.().catch(() => {});
+                    } else {
+                      document.documentElement.requestFullscreen?.().catch(() => {});
+                    }
+                  }
+                  setIsChromeVsApkModalOpen(false);
+                }}
+                className="py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase transition active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Pantalla Completa</span>
+              </button>
+
+              <button
+                onClick={() => setIsChromeVsApkModalOpen(false)}
+                className="py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-xs uppercase transition active:scale-95"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
+export default DeadLanAppView;
