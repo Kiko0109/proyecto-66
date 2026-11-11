@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", os.getenv("BOT_TOKEN", ""))
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 MARKET_API_KEY = os.getenv("MARKET_API_KEY", "")
+
 MAX_HORIZON_HOURS = 4
 
 ASSETS = [
@@ -160,46 +161,38 @@ def main():
         
     best = max(signals, key=lambda s: s["confidence"])
     
-    report = (
-        f"⚡ *PROYECTO 66 - SEÑAL TÁCTICA 24/7 (NUBE)*
-"
-        f"👑 *Comandante:* Kiko0109 | *Supervisión:* Yan & Max
-
-"
-        f"🎯 *Activo:* `{best['symbol']}` ({best['name']})
-"
-        f"⏱️ *Horizonte:* `Intradía (Máx 4 Horas)`
-"
-        f"📊 *Acción:* `{'🟢 COMPRA (BUY)' if best['signal'] == 'BUY' else '🔴 VENTA (SELL)'}`
-"
-        f"💰 *Precio Actual:* `${best['price']}`
-"
-        f"⏳ *Rango Entrada (Cuba):* `{best['entry_range']}`
-"
-        f"🛑 *Stop Loss:* `${best['stop_loss']}`
-"
-        f"🎯 *Take Profit 1:* `${best['take_profit_1']}`
-"
-        f"🚀 *Take Profit 2:* `${best['take_profit_2']}`
-"
-        f"⚖️ *Lote Sugerido:* `{best['recommended_lot']}`
-"
-        f"📈 *Confluencia Técnica:* RSI `{best['rsi']}` | MACD `{best['macd']}` ({best['confidence']}% confianza)
-
-"
-        f"ℹ️ *0% móvil. Calculado 100% en servidores en la nube.*"
-    )
+    report = "\n".join([
+        "⚡ *PROYECTO 66 - SEÑAL TÁCTICA 24/7 (NUBE)*",
+        "👑 *Comandante:* Kiko0109 | *Supervisión:* Yan & Max",
+        "",
+        f"🎯 *Activo:* `{best['symbol']}` ({best['name']})",
+        "⏱️ *Horizonte:* `Intradía (Máx 4 Horas)`",
+        f"📊 *Acción:* `{'🟢 COMPRA (BUY)' if best['signal'] == 'BUY' else '🔴 VENTA (SELL)'}`",
+        f"💰 *Precio Actual:* `${best['price']}`",
+        f"⏳ *Rango Entrada (Cuba):* `{best['entry_range']}`",
+        f"🛑 *Stop Loss:* `${best['stop_loss']}`",
+        f"🎯 *Take Profit 1:* `${best['take_profit_1']}`",
+        f"🚀 *Take Profit 2:* `${best['take_profit_2']}`",
+        f"⚖️ *Lote Sugerido:* `{best['recommended_lot']}`",
+        f"📈 *Confluencia Técnica:* RSI `{best['rsi']}` | MACD `{best['macd']}` ({best['confidence']}% confianza)",
+        "",
+        "ℹ️ *0% consumo móvil. Calculado 100% en servidores en la nube.*"
+    ])
     
     send_telegram_alert(report)
     
     state_file = "cloud_state.json"
-    with open(state_file, "w", encoding="utf-8") as f:
-        json.dump({
-            "last_cycle": datetime.now(timezone.utc).isoformat(),
-            "signals": signals,
-            "best_signal": best
-        }, f, indent=2)
-    print("✅ Estado guardado en cloud_state.json")
+    state_data = {
+        "last_cycle": datetime.now(timezone.utc).isoformat(),
+        "signals": signals,
+        "best_signal": best
+    }
+    try:
+        with open(state_file, "w", encoding="utf-8") as f:
+            json.dump(state_data, f, indent=2)
+        print("✅ Estado guardado en cloud_state.json")
+    except Exception as e:
+        print(f"Aviso guardando estado local: {e}")
 
 if __name__ == "__main__":
     main()
