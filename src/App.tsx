@@ -23,7 +23,6 @@ import { SovereignAiModal } from './components/SovereignAiModal';
 import { CloudNetworkModal } from './components/CloudNetworkModal';
 import { SportsBettingModal } from './components/SportsBettingModal';
 import { CryptoWalletModal } from './components/CryptoWalletModal';
-import { MarketAnalysisPanel } from './components/MarketAnalysisPanel';
 import { StudyAppView } from './components/StudyAppView';
 import { GamesAppView } from './components/GamesAppView';
 import { TelegramGamesHubView } from './components/TelegramGamesHubView';
@@ -118,7 +117,6 @@ export default function App() {
   const [isTelegramOpen, setIsTelegramOpen] = useState(false);
   const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
   const [isSovereignAiOpen, setIsSovereignAiOpen] = useState(false);
-  const [isMarketPanelOpen, setIsMarketPanelOpen] = useState(false);
   const [isCloudNetworkOpen, setIsCloudNetworkOpen] = useState(false);
   const [isSportsBettingOpen, setIsSportsBettingOpen] = useState(false);
   const [isCryptoWalletOpen, setIsCryptoWalletOpen] = useState(false);
@@ -707,10 +705,6 @@ export default function App() {
             if (settings.soundEffects) playCyberSound('click');
             setIsSovereignAiOpen(true);
           }}
-          onOpenMarketPanel={() => {
-            if (settings.soundEffects) playCyberSound('click');
-            setIsMarketPanelOpen(true);
-          }}
           onOpenCloudNetwork={() => {
             if (settings.soundEffects) playCyberSound('click');
             setIsCloudNetworkOpen(true);
@@ -838,8 +832,6 @@ export default function App() {
                       setIsApkGuideOpen(true);
                     } else if (prompt === 'Abrir Centro de IA Soberana') {
                       setIsSovereignAiOpen(true);
-                    } else if (prompt === 'Abrir Panel Táctico de Mercado') {
-                      setIsMarketPanelOpen(true);
                     } else {
                       handleSendMessage(prompt);
                     }
@@ -985,14 +977,6 @@ export default function App() {
         onDeleteKnowledgeEntry={handleDeleteKnowledgeEntry}
         aiConfig={aiConfig}
         onUpdateAiConfig={handleUpdateAiConfig}
-      />
-
-      <MarketAnalysisPanel
-        isOpen={isMarketPanelOpen}
-        onClose={() => setIsMarketPanelOpen(false)}
-        onSendToChat={handleSendMessage}
-        isEmergencyStopped={isAutomationStopped}
-        onToggleEmergencyStop={handleToggleEmergencyStop}
       />
 
       <CloudNetworkModal
