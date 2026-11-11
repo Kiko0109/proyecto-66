@@ -28,6 +28,7 @@ import { StudyAppView } from './components/StudyAppView';
 import { GamesAppView } from './components/GamesAppView';
 import { TelegramGamesHubView } from './components/TelegramGamesHubView';
 import { DeadLanAppView } from './components/DeadLanAppView';
+import { MundoxAiAppView } from './components/MundoxAiAppView';
 import { MundoxSplashScreen } from './components/MundoxSplashScreen';
 import { BotDossierModal } from './components/BotDossierModal';
 import { BotsOverviewModal } from './components/BotsOverviewModal';
@@ -153,6 +154,7 @@ export default function App() {
       const appParam = params.get('app');
       if (appParam === 'control') return 'control';
       if (appParam === 'juegos' || appParam === 'games') return 'juegos';
+      if (appParam === 'mundox' || appParam === 'ai') return 'mundox';
       if (appParam === 'deadlan' || appParam === 'zombie') return 'deadlan';
     } catch {}
     return 'deadlan';
@@ -160,6 +162,9 @@ export default function App() {
 
   // MUNDOX Telegram Games Hub & APK Portada con Barra de Carga
   const [showMundoxSplash, setShowMundoxSplash] = useState<boolean>(true);
+
+  // DEAD LAN Fullscreen Viewport Mode (hides top web headers for native APK immersion)
+  const [isDeadLanFullscreen, setIsDeadLanFullscreen] = useState<boolean>(true);
 
   // Proposed Tasks with Approval Requirement (Rule 3 & 8)
   const [pendingTasks, setPendingTasks] = useState<ProposedTask[]>(() => {
@@ -675,67 +680,69 @@ export default function App() {
       }
       neonIntensity={settings.neonIntensity}
     >
-      {/* Top Header */}
-      <Header
-        onOpenSettings={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsSettingsOpen(true);
-        }}
-        onOpenApkGuide={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsApkGuideOpen(true);
-        }}
-        onOpenBotsOverview={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsBotsOverviewOpen(true);
-        }}
-        onOpenTelegram={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsTelegramOpen(true);
-        }}
-        onOpenAuditLog={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsAuditLogOpen(true);
-        }}
-        onOpenSovereignAi={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsSovereignAiOpen(true);
-        }}
-        onOpenMarketPanel={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsMarketPanelOpen(true);
-        }}
-        onOpenCloudNetwork={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsCloudNetworkOpen(true);
-        }}
-        onOpenSportsBetting={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsSportsBettingOpen(true);
-        }}
-        onOpenCryptoWallet={() => {
-          if (settings.soundEffects) playCyberSound('click');
-          setIsCryptoWalletOpen(true);
-        }}
-        onToggleEmergencyStop={handleToggleEmergencyStop}
-        isAutomationStopped={isAutomationStopped}
-        onInstallPwa={handleInstallPwa}
-        canInstallPwa={canInstallPwa}
-        neonIntensity={settings.neonIntensity}
-        telegramStatus={telegramConfig.status}
-        isContinuousVoiceActive={settings.continuousVoiceMode}
-        onToggleContinuousVoice={() => {
-          const nextVal = !settings.continuousVoiceMode;
-          setSettings((prev) => ({
-            ...prev,
-            continuousVoiceMode: nextVal,
-            ttsEnabled: true
-          }));
-          if (settings.soundEffects) {
-            playCyberSound(nextVal ? 'approve' : 'click');
-          }
-        }}
-      />
+      {/* Top Header (Hidden in DEAD LAN Fullscreen mode to free up 100% of the mobile screen) */}
+      {!(currentApp === 'deadlan' && isDeadLanFullscreen) && (
+        <Header
+          onOpenSettings={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsSettingsOpen(true);
+          }}
+          onOpenApkGuide={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsApkGuideOpen(true);
+          }}
+          onOpenBotsOverview={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsBotsOverviewOpen(true);
+          }}
+          onOpenTelegram={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsTelegramOpen(true);
+          }}
+          onOpenAuditLog={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsAuditLogOpen(true);
+          }}
+          onOpenSovereignAi={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsSovereignAiOpen(true);
+          }}
+          onOpenMarketPanel={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsMarketPanelOpen(true);
+          }}
+          onOpenCloudNetwork={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsCloudNetworkOpen(true);
+          }}
+          onOpenSportsBetting={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsSportsBettingOpen(true);
+          }}
+          onOpenCryptoWallet={() => {
+            if (settings.soundEffects) playCyberSound('click');
+            setIsCryptoWalletOpen(true);
+          }}
+          onToggleEmergencyStop={handleToggleEmergencyStop}
+          isAutomationStopped={isAutomationStopped}
+          onInstallPwa={handleInstallPwa}
+          canInstallPwa={canInstallPwa}
+          neonIntensity={settings.neonIntensity}
+          telegramStatus={telegramConfig.status}
+          isContinuousVoiceActive={settings.continuousVoiceMode}
+          onToggleContinuousVoice={() => {
+            const nextVal = !settings.continuousVoiceMode;
+            setSettings((prev) => ({
+              ...prev,
+              continuousVoiceMode: nextVal,
+              ttsEnabled: true
+            }));
+            if (settings.soundEffects) {
+              playCyberSound(nextVal ? 'approve' : 'click');
+            }
+          }}
+        />
+      )}
 
       {/* Emergency Stop Banner (Section 3) */}
       {isAutomationStopped && (
@@ -756,19 +763,28 @@ export default function App() {
         </div>
       )}
 
-      {/* 3-App Navigation Switcher (APK A Control, APK B Estudio, APK C Juegos) */}
-      <AppModeSwitcher
-        currentApp={currentApp}
-        onSelectApp={(app) => {
-          setCurrentApp(app);
-          if (settings.soundEffects) playCyberSound('switch');
-        }}
-        neonIntensity={settings.neonIntensity}
-      />
+      {/* 3-App Navigation Switcher (Hidden in DEAD LAN Fullscreen mode) */}
+      {!(currentApp === 'deadlan' && isDeadLanFullscreen) && (
+        <AppModeSwitcher
+          currentApp={currentApp}
+          onSelectApp={(app) => {
+            setCurrentApp(app);
+            if (settings.soundEffects) playCyberSound('switch');
+          }}
+          neonIntensity={settings.neonIntensity}
+        />
+      )}
 
       {/* APPLICATION BODY BY SELECTED MODE */}
       {currentApp === 'deadlan' ? (
-        <DeadLanAppView />
+        <DeadLanAppView
+          isFullscreen={isDeadLanFullscreen}
+          onToggleFullscreen={() => setIsDeadLanFullscreen((prev) => !prev)}
+          onExitToControl={() => setCurrentApp('control')}
+          onSwitchApp={(app) => setCurrentApp(app)}
+        />
+      ) : currentApp === 'mundox' ? (
+        <MundoxAiAppView onBackToApp={() => setCurrentApp('control')} />
       ) : currentApp === 'estudio' ? (
         <StudyAppView />
       ) : currentApp === 'juegos' ? (
